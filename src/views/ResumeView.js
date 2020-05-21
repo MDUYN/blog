@@ -23,6 +23,7 @@ const ResumeOverview = props => {
     return (
         <div className={classes.root}>
 
+
         </div>
     );
 }
