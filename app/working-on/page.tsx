@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { withBasePath } from "../lib/base-path";
 
 export const metadata: Metadata = {
   title: "What I'm Working On",
@@ -31,14 +32,14 @@ export default function WorkingOnPage() {
         <div className="border border-[var(--color-terminal-border)] rounded-md p-5 bg-[var(--color-terminal-surface)]">
           <div className="mb-4">
             <Image
-              src="/assets/finterion-dark.png"
+              src={withBasePath("/assets/finterion-dark.png")}
               alt="Finterion"
               width={140}
               height={35}
               className="logo-dark"
             />
             <Image
-              src="/assets/finterion-light.png"
+              src={withBasePath("/assets/finterion-light.png")}
               alt="Finterion"
               width={140}
               height={35}
@@ -77,7 +78,7 @@ export default function WorkingOnPage() {
         <div className="mt-4 border border-[var(--color-terminal-border)] rounded-md p-5 bg-[var(--color-terminal-surface)]">
           <div className="flex items-center gap-3 mb-3">
             <Image
-              src="/assets/microsoft.png"
+              src={withBasePath("/assets/microsoft.png")}
               alt="Microsoft"
               width={28}
               height={28}
@@ -107,7 +108,7 @@ export default function WorkingOnPage() {
         <div className="mt-4 border border-[var(--color-terminal-border)] rounded-md p-5 bg-[var(--color-terminal-surface)]">
           <div className="flex items-center gap-3 mb-3">
             <Image
-              src="/assets/coding-kitties.png"
+              src={withBasePath("/assets/coding-kitties.png")}
               alt="Coding Kitties"
               width={28}
               height={28}
