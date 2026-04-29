@@ -8,6 +8,7 @@ export const metadata = {
 };
 
 import FinterionCard from "../../components/FinterionCard";
+import Img from "../../components/Img";
 
 <FinterionCard />
 
@@ -47,7 +48,7 @@ When you're iterating on strategy parameters and want to compare 20 variations a
 The redesigned report adapts dynamically based on the data you give it:
 
 <div className="my-8 flex justify-center">
-  <img src="/assets/backtest-report-flow.svg" alt="Backtest report data flow diagram showing how data from live backtests or disk storage flows into BacktestReport and renders as either a single-strategy or multi-strategy HTML dashboard" className="w-full max-w-[720px]" />
+  <Img src="/assets/backtest-report-flow.svg" alt="Backtest report data flow diagram showing how data from live backtests or disk storage flows into BacktestReport and renders as either a single-strategy or multi-strategy HTML dashboard" className="w-full max-w-[720px]" />
 </div>
 
 - **1 strategy with N runs** → single-strategy deep-dive with equity curves, drawdown, trades, risk metrics, and monthly return heatmaps

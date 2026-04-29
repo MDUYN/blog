@@ -8,6 +8,7 @@ export const metadata = {
 };
 
 import FinterionCard from "../../components/FinterionCard";
+import Img from "../../components/Img";
 
 <FinterionCard />
 
@@ -32,7 +33,7 @@ I just merged a [blotter system](https://github.com/coding-kitties/investing-alg
 In traditional finance, a blotter is the record of all trades made during a session — the trade diary. In the context of an algorithmic trading framework, it's more than that. It's the layer that sits between your strategy and order execution:
 
 <div className="my-8 flex justify-center">
-  <img src="/assets/blotter-architecture.svg" alt="Blotter architecture diagram showing order flow from Strategy through Blotter to OrderService, OrderExecutor, and Exchange or Simulation" className="w-full max-w-[720px]" />
+  <Img src="/assets/blotter-architecture.svg" alt="Blotter architecture diagram showing order flow from Strategy through Blotter to OrderService, OrderExecutor, and Exchange or Simulation" className="w-full max-w-[720px]" />
 </div>
 
 Every order, whether it's a market buy, limit sell, or a batch of rebalancing trades, flows through the blotter before hitting the order service. This gives you a single interception point to apply slippage, calculate commissions, record transactions, and even implement custom order routing.

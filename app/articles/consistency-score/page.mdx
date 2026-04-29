@@ -8,6 +8,7 @@ export const metadata = {
 };
 
 import FinterionCard from "../../components/FinterionCard";
+import Img from "../../components/Img";
 
 <FinterionCard />
 
@@ -28,7 +29,7 @@ A strategy that returns 200% in one walk-forward window and -40% in the next has
 The [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) now exposes a **consistency score** for exactly this. It's a single number in `[0, 1]` that captures how repeatable a strategy's performance is across walk-forward windows.
 
 <div className="my-8 flex justify-center">
-  <img src="/assets/consistency-windows.svg" alt="Six equity curves arranged in two rows. Top row shows three windows of a strategy with consistent +24-26% returns. Bottom row shows three windows of a different strategy with returns of +92%, -32%, and +18%. Both strategies have a mean window return of about +25%, but only the top one is consistent." className="w-full max-w-[760px]" />
+  <Img src="/assets/consistency-windows.svg" alt="Six equity curves arranged in two rows. Top row shows three windows of a strategy with consistent +24-26% returns. Bottom row shows three windows of a different strategy with returns of +92%, -32%, and +18%. Both strategies have a mean window return of about +25%, but only the top one is consistent." className="w-full max-w-[760px]" />
 </div>
 
 Both strategies above average about +25% per window. Headline metrics — mean return, total compounded return, even Sharpe — will rank them as roughly equivalent. But the bottom strategy lost a third of its capital in one window. Anyone running it live would have stopped trading before window 3 ever happened. The consistency score is the metric that tells these two apart at a glance.

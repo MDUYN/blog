@@ -8,6 +8,7 @@ export const metadata = {
 };
 
 import FinterionCard from "../../components/FinterionCard";
+import Img from "../../components/Img";
 
 <FinterionCard />
 
@@ -42,7 +43,7 @@ This matters for several reasons:
 ## The design
 
 <div className="my-8 flex justify-center">
-  <img src="/assets/fx-conversion-flow.svg" alt="FX conversion architecture showing markets with local currencies flowing through FXRateProvider to compute portfolio value in a single base currency" className="w-full max-w-[720px]" />
+  <Img src="/assets/fx-conversion-flow.svg" alt="FX conversion architecture showing markets with local currencies flowing through FXRateProvider to compute portfolio value in a single base currency" className="w-full max-w-[720px]" />
 </div>
 
 The solution has three parts: a pluggable FX rate provider, currency-aware market configuration, and automatic conversion in the context API.

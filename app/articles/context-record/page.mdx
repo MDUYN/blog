@@ -8,6 +8,7 @@ export const metadata = {
 };
 
 import FinterionCard from "../../components/FinterionCard";
+import Img from "../../components/Img";
 
 <FinterionCard />
 
@@ -40,7 +41,7 @@ What I wanted was simple: call a function during your strategy, pass it any key-
 ## The design
 
 <div className="my-8 flex justify-center">
-  <img src="/assets/context-record-flow.svg" alt="Data flow diagram showing context.record() capturing values from the strategy, storing them on BacktestRun, and outputting to DataFrame or plotting" className="w-full max-w-[720px]" />
+  <Img src="/assets/context-record-flow.svg" alt="Data flow diagram showing context.record() capturing values from the strategy, storing them on BacktestRun, and outputting to DataFrame or plotting" className="w-full max-w-[720px]" />
 </div>
 
 The API is intentionally minimal. Inside your strategy's `on_run` method, call `context.record()` with any keyword arguments:

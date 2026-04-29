@@ -8,6 +8,7 @@ export const metadata = {
 };
 
 import FinterionCard from "../../components/FinterionCard";
+import Img from "../../components/Img";
 
 <FinterionCard />
 
@@ -36,7 +37,7 @@ What I wanted: declare a URL, get a DataFrame. Optionally parse dates, cache it,
 ## Two approaches
 
 <div className="my-8 flex justify-center">
-  <img src="/assets/external-data-flow.svg" alt="Data flow diagram showing DataSource.from_csv and context.fetch_csv converging through URL fetch, caching, and post-processing to produce a Polars DataFrame" className="w-full max-w-[720px]" />
+  <Img src="/assets/external-data-flow.svg" alt="Data flow diagram showing DataSource.from_csv and context.fetch_csv converging through URL fetch, caching, and post-processing to produce a Polars DataFrame" className="w-full max-w-[720px]" />
 </div>
 
 The implementation gives you two ways to load external data, depending on whether you know the URL upfront or need to decide at runtime.

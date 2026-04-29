@@ -8,6 +8,7 @@ export const metadata = {
 };
 
 import FinterionCard from "../../components/FinterionCard";
+import Img from "../../components/Img";
 
 <FinterionCard />
 
@@ -30,7 +31,7 @@ But CV has a sharp edge: **it falls apart when the mean is near zero**, and it g
 That's the **stability score**.
 
 <div className="my-8 flex justify-center">
-  <img src="/assets/stability-vs-cv.svg" alt="Two side-by-side bar charts comparing per-window win rates of two strategies. Strategy A has win rates of 45, 50, 55 — CV consistency 0.90, stability 0.80. Strategy B has win rates of 1, 2, 3 — CV consistency 0.00, stability 0.80. Both have the same standard deviation, but CV is misled by Strategy B's tiny mean while stability correctly identifies them as equally tight." className="w-full max-w-[760px]" />
+  <Img src="/assets/stability-vs-cv.svg" alt="Two side-by-side bar charts comparing per-window win rates of two strategies. Strategy A has win rates of 45, 50, 55 — CV consistency 0.90, stability 0.80. Strategy B has win rates of 1, 2, 3 — CV consistency 0.00, stability 0.80. Both have the same standard deviation, but CV is misled by Strategy B's tiny mean while stability correctly identifies them as equally tight." className="w-full max-w-[760px]" />
 </div>
 
 The picture above is the whole argument in one frame. Both strategies have the same per-window standard deviation (σ ≈ 5). CV says they're _wildly_ different — 0.90 versus 0.00 — because Strategy B's mean is small. Stability says they're identically tight, which is what you actually want to know about a bounded metric.
