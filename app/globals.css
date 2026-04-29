@@ -141,7 +141,7 @@ code {
   color: var(--color-terminal-cyan);
 }
 
-html.light code {
+html.light code:not(pre code) {
   background-color: rgba(0, 0, 0, 0.06);
   color: var(--color-terminal-cyan);
 }
