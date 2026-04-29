@@ -1,0 +1,211 @@
+export const metadata = {
+  title: "Loading External Data from Any URL During Strategy Execution",
+  description:
+    "How I added CSV, JSON, and Parquet URL data providers to the Investing Algorithm Framework — with caching, refresh intervals, and cloud deployment support.",
+  alternates: {
+    canonical: "/articles/external-data-providers",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Investing Algorithm Framework
+</div>
+
+# Loading External Data from Any URL During Strategy Execution
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  April 2026
+</div>
+</div>
+
+Most trading strategies don't run on price data alone. You might use sentiment scores from an NLP pipeline, earnings dates from an API, macro indicators from a government data portal, or feature vectors from a machine learning model. The problem is getting that data _into_ your strategy without writing boilerplate data providers every time.
+
+I just shipped [external data providers](https://github.com/coding-kitties/investing-algorithm-framework/pull/472) for the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework). You can now fetch CSV, JSON, or Parquet data from any URL — with caching, refresh intervals, date parsing, and pre/post-processing — in a single function call.
+
+## The problem
+
+The framework already supported custom data types through `DataProvider` subclasses. But creating one meant writing a class with `has_data()`, `get_data()`, `prepare_backtest_data()`, and `get_backtest_data()` methods. For something as simple as "fetch this CSV and give me a DataFrame", that's way too much ceremony.
+
+What I wanted: declare a URL, get a DataFrame. Optionally parse dates, cache it, and refresh on a schedule. No custom classes.
+
+## Two approaches
+
+<div className="my-8 flex justify-center">
+  <img src="/assets/external-data-flow.svg" alt="Data flow diagram showing DataSource.from_csv and context.fetch_csv converging through URL fetch, caching, and post-processing to produce a Polars DataFrame" className="w-full max-w-[720px]" />
+</div>
+
+The implementation gives you two ways to load external data, depending on whether you know the URL upfront or need to decide at runtime.
+
+### Pre-declared: DataSource factory methods
+
+Declare external data alongside your market data sources. The framework fetches it automatically before your strategy runs:
+
+```python
+from investing_algorithm_framework import TradingStrategy, DataSource, TimeUnit
+
+class SentimentStrategy(TradingStrategy):
+    time_unit = TimeUnit.DAY
+    interval = 1
+    symbols = ["BTC"]
+
+    data_sources = [
+        DataSource.from_csv(
+            identifier="sentiment",
+            url="https://example.com/crypto_sentiment.csv",
+            date_column="date",
+            date_format="%Y-%m-%d",
+            cache=True,
+            refresh_interval="1d",
+        ),
+    ]
+
+    def run_strategy(self, context, data):
+        sentiment_df = data["sentiment"]
+        latest_score = sentiment_df["score"][-1]
+
+        if latest_score > 0.7:
+            context.create_limit_order(...)
+```
+
+Same pattern for JSON and Parquet — just swap `from_csv` with `from_json` or `from_parquet`. JSON accepts both arrays of objects and objects of arrays. Parquet is binary, so `pre_process` callbacks aren't supported for it (use `post_process` instead).
+
+### On-demand: context methods
+
+When the URL depends on runtime values or you only need data conditionally, fetch it dynamically:
+
+```python
+class DynamicStrategy(TradingStrategy):
+    def run_strategy(self, context, data):
+        sentiment = context.fetch_csv(
+            url="https://example.com/sentiment.csv",
+            date_column="date",
+            cache=True,
+            refresh_interval="1d",
+        )
+
+        earnings = context.fetch_json(
+            url="https://api.example.com/earnings",
+            date_column="report_date",
+        )
+
+        features = context.fetch_parquet(
+            url="https://storage.example.com/features.parquet",
+        )
+```
+
+Both approaches produce the same output: a Polars DataFrame, cached the same way, with the same parameters.
+
+## The architecture
+
+Under the hood, all three formats share a single base class — `BaseURLDataProvider` — that handles the common logic. The format-specific subclasses (`CSVURLDataProvider`, `JSONURLDataProvider`, `ParquetURLDataProvider`) only implement four methods:
+
+- `_parse_raw_data(raw_bytes)` — parse the downloaded bytes into a DataFrame
+- `_read_cache_file(path)` — read from disk cache
+- `_write_cache_file(df, path)` — write to disk cache
+- `_cache_file_suffix()` — return `.csv`, `.json`, or `.parquet`
+
+Everything else — URL fetching, caching logic, date parsing, pre/post-processing, backtest integration — lives in the base class. Adding a new format (YAML, Excel, whatever) would mean ~30 lines of code.
+
+## Caching
+
+Caching works at two levels:
+
+**In-memory** — once fetched, the DataFrame stays in memory for the lifetime of the process. Subsequent calls to `get_data()` return the cached object without re-parsing.
+
+**On disk** — fetched data is written to `resources/data/` using an MD5 hash of the URL as the filename. No collisions, no naming conflicts. If the file exists and hasn't expired, the provider reads from disk instead of hitting the network.
+
+The `refresh_interval` parameter controls staleness. It compares the cache file's modification time against the current time:
+
+```python
+DataSource.from_csv(
+    identifier="macro",
+    url="https://example.com/macro.csv",
+    refresh_interval="1d",  # re-fetch once per day
+)
+```
+
+Supported intervals: `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `1d`, `1W`.
+
+## Pre and post-processing
+
+Sometimes the raw data needs cleanup before parsing, or transformation after.
+
+**Pre-processing** operates on the raw text before it's parsed into a DataFrame. Useful for stripping comment lines, fixing delimiters, or filtering:
+
+```python
+def clean_csv(text):
+    lines = [l for l in text.split("\n") if not l.startswith("#")]
+    return "\n".join(lines)
+
+DataSource.from_csv(
+    identifier="cleaned",
+    url="https://example.com/messy.csv",
+    pre_process=clean_csv,
+)
+```
+
+**Post-processing** operates on the parsed DataFrame. Add computed columns, filter rows, change types:
+
+```python
+import polars as pl
+
+def add_z_score(df):
+    mean = df["score"].mean()
+    std = df["score"].std()
+    return df.with_columns(
+        ((pl.col("score") - mean) / std).alias("z_score")
+    )
+
+DataSource.from_csv(
+    identifier="scored",
+    url="https://example.com/scores.csv",
+    post_process=add_z_score,
+)
+```
+
+## Cloud deployments
+
+The cache path was a subtle but important design decision. Cache files live inside `resources/data/` — the same directory that the framework's state handlers already sync. If you're deploying to AWS Lambda or Azure Functions with `AWSS3StorageStateHandler` or `AzureBlobStorageStateHandler`, the flow is:
+
+1. **Load state** — cache files are restored from S3 / Azure Blob to `resources/data/`
+2. **Check interval** — file modification time is compared against `refresh_interval`
+3. **Skip or re-fetch** — only hits the URL if the interval has elapsed
+4. **Save state** — updated cache files are synced back to cloud storage
+
+This means `refresh_interval` works correctly across cold starts. No extra configuration needed.
+
+An earlier version stored cache files in a detached `.data_cache/` directory, which wouldn't survive Lambda cold starts. Moving it inside the resource directory fixed that without adding any new configuration options.
+
+## Backtesting
+
+External data sources integrate with backtesting automatically. When you configure a `date_column`, the framework filters data to only include rows up to the current backtest date:
+
+```python
+data_sources = [
+    DataSource.from_csv(
+        identifier="macro",
+        url="https://example.com/macro_indicators.csv",
+        date_column="date",
+        date_format="%Y-%m-%d",
+    ),
+]
+```
+
+During backtesting, `data["macro"]` will only contain rows where `date <= current_backtest_date`. This gives you realistic point-in-time data — no lookahead bias from future rows leaking into your strategy.
+
+## What this unlocks
+
+This was 1,849 additions across 16 files — including 43 tests covering all three providers. The key capabilities it adds:
+
+- **Alternative data** — sentiment scores, news feeds, social signals
+- **Economic indicators** — inflation, interest rates, GDP from government APIs
+- **Earnings data** — quarterly reports, revenue estimates from financial data providers
+- **ML features** — pre-computed feature vectors from your model pipeline
+- **Cross-asset signals** — data from other markets or asset classes
+
+All without writing a single custom `DataProvider` class. The [PR](https://github.com/coding-kitties/investing-algorithm-framework/pull/472) is merged and available now.

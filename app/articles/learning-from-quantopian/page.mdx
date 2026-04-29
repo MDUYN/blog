@@ -1,0 +1,135 @@
+export const metadata = {
+  title:
+    "Learning from Quantopian: How Finterion Is Building a Different Kind of Quant Platform",
+  description:
+    "When Quantopian shut down in 2020, it left behind hard lessons about crowdsourcing alpha. Here's how Finterion is taking a different path.",
+  alternates: {
+    canonical: "/articles/learning-from-quantopian",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Finterion · Quantitative Trading
+</div>
+
+# Learning from Quantopian: How Finterion Is Building a Different Kind of Quant Platform
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  April 2026
+</div>
+</div>
+
+When Quantopian shut down in 2020, it marked the end of one of the most ambitious experiments in modern finance: a crowdsourced hedge fund powered by thousands of developers.
+
+At its peak, Quantopian attracted over 200,000 users, democratized access to quantitative finance, and produced widely used tools like Zipline. And yet, despite its technical success and strong community, the core business ultimately failed.
+
+[Finterion](https://finterion.com) is built with those lessons in mind.
+
+This article breaks down where Quantopian went wrong — and how Finterion is intentionally taking a different path.
+
+## The promise (and problem) of Quantopian
+
+Quantopian's vision was compelling: _let anyone build trading algorithms, and allocate capital to the best ones._
+
+In theory, this creates a global talent pool capable of generating alpha at scale. In practice, it ran into a fundamental problem:
+
+> Alpha is not something people willingly give away.
+
+The platform incentivized users to submit strategies in hopes of being selected for capital allocation. But this created unintended consequences:
+
+- Strategies were often overfitted to historical data
+- Robust, scalable strategies were rare
+- The best ideas were either kept private or never shared
+
+Ultimately, the Quantopian hedge fund struggled to deliver consistent returns, and the model broke down.
+
+## The core insight
+
+Quantopian tried to _extract_ alpha from the crowd. Finterion is designed to _enable the monetization_ of alpha.
+
+That distinction sounds subtle, but it changes everything.
+
+## 1. From hedge fund to marketplace
+
+Quantopian operated like a centralized fund:
+
+- Users submitted strategies
+- The platform selected a few
+- Capital was allocated internally
+
+Finterion takes a different approach:
+
+- Strategy creators retain ownership
+- Investors choose which strategies to follow
+- Capital flows directly based on user demand
+
+This shifts the model from _selection-based_ to _market-driven_. Instead of trying to identify the best strategies behind closed doors, Finterion lets performance speak in a transparent environment.
+
+## 2. Aligning incentives with reality
+
+One of Quantopian's biggest challenges was misaligned incentives. Participants were optimizing for passing selection criteria and performing well in backtests — not necessarily performing well in live markets.
+
+Finterion addresses this by tying success to real-world outcomes:
+
+- Strategies are evaluated based on live performance
+- Developers build track records over time
+- Users allocate capital based on observed results
+
+The only sustainable way to succeed is to perform in real conditions.
+
+## 3. Moving beyond backtests
+
+Backtesting is a powerful tool — but also a dangerous one. Quantopian's ecosystem made it easy to optimize on historical data, iterate quickly, and accidentally overfit.
+
+Finterion treats backtests as a starting point, not a product. Key principles include:
+
+- Emphasis on forward performance
+- Realistic assumptions (fees, slippage, liquidity)
+- Preference for live, verifiable track records
+
+The goal is simple: reduce the gap between simulated results and reality.
+
+## 4. Building for trust, not just scale
+
+A common failure mode in trading platforms is the "signal marketplace problem": anyone can publish strategies, quality varies widely, and users struggle to distinguish signal from noise. Over time, trust erodes.
+
+Finterion is designed to prioritize quality over quantity:
+
+- Curated visibility for top-performing strategies
+- Transparent performance metrics
+- Clear risk characteristics
+
+The platform's long-term success depends on one thing: users must be able to trust what they see.
+
+## 5. Where the real moat lives
+
+Quantopian's most enduring legacy wasn't its hedge fund — it was its tools. Libraries like Zipline continue to be used years later. The infrastructure survived. The business model did not.
+
+Finterion embraces this reality. The [framework](https://github.com/coding-kitties/investing-algorithm-framework) is open and extensible. Innovation at the tooling level is encouraged. But the defensible layer is elsewhere:
+
+- **Distribution** — access to investors
+- **Verified performance data** — real track records, not backtests
+- **Network effects** — between developers and capital
+
+The moat is not the code — it's the ecosystem.
+
+## 6. A different endgame
+
+Quantopian attempted to build a better hedge fund. Finterion is building a platform where developers can monetize real strategies and investors can discover and allocate capital efficiently.
+
+This is closer to a _marketplace for quantitative strategies_ than a fund. And that distinction matters.
+
+## Final thoughts
+
+Quantopian was not a failure in the traditional sense. It proved that there is massive global interest in quantitative trading, that open tooling can accelerate innovation, and that communities can form around shared financial infrastructure.
+
+But it also showed the limits of crowdsourcing alpha.
+
+Finterion exists because of these lessons — not in spite of them. The goal is not to repeat Quantopian's model. It's to build something that works where that model didn't.
+
+This is an evolving approach, and like any platform operating in financial markets, success will ultimately be determined by real-world outcomes. But by learning from the past, we can at least avoid repeating it.

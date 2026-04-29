@@ -1,0 +1,139 @@
+export const metadata = {
+  title: "Tracking Custom Variables During Backtests with context.record()",
+  description:
+    "How I added a record() function to the Investing Algorithm Framework so you can track any indicator, signal, or metric during backtesting.",
+  alternates: {
+    canonical: "/articles/context-record",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Investing Algorithm Framework
+</div>
+
+# Tracking Custom Variables During Backtests with `context.record()`
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  April 2026
+</div>
+</div>
+
+When you're developing a trading strategy, the hardest part isn't writing the logic — it's understanding _why_ your strategy made specific decisions. You can look at the equity curve and see that a trade happened on January 15th, but what was the RSI at that moment? What was the moving average crossover signal? What custom score triggered the entry?
+
+The [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) now has a `context.record()` function that solves this. You can track any variable, at every iteration, and analyze it after the backtest completes.
+
+Here's how it works.
+
+## The problem
+
+The framework already provided portfolio snapshots, trade history, and position data after a backtest. But there was no generic way to record _intermediate calculations_ — the indicators, signals, and custom metrics that drive your strategy's decisions.
+
+Without this, debugging looked like: add print statements, re-run the backtest, squint at logs, repeat. Not great.
+
+What I wanted was simple: call a function during your strategy, pass it any key-value pairs, and get a clean time series back after the backtest finishes.
+
+## The design
+
+<div className="my-8 flex justify-center">
+  <img src="/assets/context-record-flow.svg" alt="Data flow diagram showing context.record() capturing values from the strategy, storing them on BacktestRun, and outputting to DataFrame or plotting" className="w-full max-w-[720px]" />
+</div>
+
+The API is intentionally minimal. Inside your strategy's `on_run` method, call `context.record()` with any keyword arguments:
+
+```python
+def on_run(self, context, data):
+    ohlcv = data["BTC/EUR_1d"]
+    close = ohlcv["Close"]
+
+    sma_20 = close.rolling(20).mean().iloc[-1]
+    rsi = compute_rsi(close).iloc[-1]
+
+    context.record(
+        sma_20=sma_20,
+        rsi=rsi,
+        signal_strength=0.85,
+    )
+```
+
+Each call stores the values together with the current backtest timestamp as `(datetime, value)` tuples. You can call `record()` multiple times per iteration — values are appended. You can record any JSON-serializable type: floats, ints, strings, dicts, lists, booleans.
+
+The key design decision: **`context.record()` is a no-op in live mode.** You can leave the calls in your production strategy without any overhead. No feature flags, no conditional checks — it just does nothing when you're not backtesting.
+
+## Accessing the data
+
+After the backtest completes, the recorded values live on the `BacktestRun` object:
+
+```python
+backtest = app.run_backtest()
+run = backtest.backtest_runs[0]
+
+# Dict[str, List[Tuple[datetime, Any]]]
+for dt, value in run.recorded_values["rsi"]:
+    print(f"{dt}: RSI = {value}")
+```
+
+Converting to a pandas DataFrame for plotting is straightforward:
+
+```python
+import pandas as pd
+
+rsi_series = pd.Series(
+    {dt: val for dt, val in run.recorded_values["rsi"]}
+)
+sma_series = pd.Series(
+    {dt: val for dt, val in run.recorded_values["sma_20"]}
+)
+
+df = pd.DataFrame({"rsi": rsi_series, "sma_20": sma_series})
+```
+
+From there, you can plot signals alongside your equity curve, overlay indicators on price charts, or run correlation analysis against your trade history.
+
+## Vectorized backtests too
+
+Not everyone uses event-driven backtests. For vectorized strategies, there's no `context` object — so instead you override `generate_recorded_values()` on your strategy and return a dictionary of pandas Series:
+
+```python
+class MyVectorStrategy(TradingStrategy):
+    def generate_recorded_values(self, data):
+        ohlcv = data["BTC/EUR_1d"]
+        close = ohlcv["Close"]
+
+        return {
+            "sma_20": close.rolling(20).mean(),
+            "rsi": compute_rsi(close),
+        }
+```
+
+Each key becomes a recorded variable with the Series index as timestamps. Same output format, same access pattern through `BacktestRun.recorded_values`.
+
+## Serialization
+
+Recorded values are fully serializable. When you save a `BacktestRun`, the recorded values are included in the `run.json` file:
+
+```python
+# Save
+run.save("/path/to/output")
+
+# Load later
+loaded = BacktestRun.open("/path/to/output")
+print(loaded.recorded_values)
+```
+
+This means you can run a backtest, save the results, and come back days later to analyze the recorded signals without re-running anything.
+
+## What this unlocks
+
+This is a small feature — 466 lines of additions across 10 files — but it changes how you work with backtests:
+
+- **Debugging**: see exactly what your indicators looked like at every decision point
+- **Signal analysis**: plot the historical values of the signals that drive your strategy
+- **Strategy comparison**: record the same metrics across different strategy variants and compare
+- **Documentation**: save a complete snapshot of your strategy's internal state alongside performance results
+
+The [PR](https://github.com/coding-kitties/investing-algorithm-framework/pull/478) is merged into main. If you're using the framework, `context.record()` is available now.

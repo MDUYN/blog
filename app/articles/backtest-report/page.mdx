@@ -1,0 +1,179 @@
+export const metadata = {
+  title: "Redesigning the Backtest Report — A Self-Contained HTML Dashboard",
+  description:
+    "How I replaced Plotly and Jinja2 with a zero-dependency HTML dashboard for single and multi-strategy backtest analysis.",
+  alternates: {
+    canonical: "/articles/backtest-report",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Software Engineering
+</div>
+
+# Redesigning the Backtest Report — A Self-Contained HTML Dashboard
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  April 2026
+</div>
+</div>
+
+The old backtest report in the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) had a problem: it only worked for a single run of a single strategy. If you wanted to compare strategies or look at multiple backtest windows, you were on your own. It also dragged in Plotly and Jinja2, bloating each report to ~3 MB and requiring a CDN.
+
+I [rewrote the entire thing](https://github.com/coding-kitties/investing-algorithm-framework/pull/420) — a self-contained HTML dashboard with zero external dependencies, canvas-based charts, and support for both single-strategy and multi-strategy analysis.
+
+## What was wrong with the old report
+
+The previous `BacktestReport` had several limitations that made it impractical for real strategy development:
+
+| Problem | Impact |
+|---------|--------|
+| Single-run only | `_create_html_report()` read `self.backtests[0]` — all other runs were ignored |
+| No comparison view | No way to visualize multiple strategies side-by-side |
+| No multi-run awareness | No concept of strategy → runs hierarchy |
+| External dependencies | Plotly + Jinja2 bloated the HTML (~3 MB per chart) and required CDN |
+| Flat storage model | `_is_backtest()` expected `results.json` + `metrics.json` at a single level |
+| No batch API | Only `run_vector_backtest()` (singular) existed — no way to batch strategies |
+
+When you're iterating on strategy parameters and want to compare 20 variations across 5 time windows, none of this works.
+
+## The new design
+
+The redesigned report adapts dynamically based on the data you give it:
+
+<div className="my-8 flex justify-center">
+  <img src="/assets/backtest-report-flow.svg" alt="Backtest report data flow diagram showing how data from live backtests or disk storage flows into BacktestReport and renders as either a single-strategy or multi-strategy HTML dashboard" className="w-full max-w-[720px]" />
+</div>
+
+- **1 strategy with N runs** → single-strategy deep-dive with equity curves, drawdown, trades, risk metrics, and monthly return heatmaps
+- **N strategies with N runs** → comparison dashboard with ranking table, normalized equity curves, and metric bar charts
+
+The API is clean:
+
+```python
+from investing_algorithm_framework import BacktestReport
+
+# From live backtest objects
+backtests = app.run_vector_backtests(
+    strategies=strategies,
+    backtest_date_ranges=backtest_windows,
+    initial_amount=1000,
+)
+
+# Single strategy dashboard
+report = BacktestReport(backtests["my_strategy"])
+report.show()
+
+# Multi-strategy comparison
+report = BacktestReport(backtests)
+report.show()
+```
+
+You can also load results from disk:
+
+```python
+# Load all strategies from a batch directory
+report = BacktestReport.open("./backtest_results/batch_1/")
+report.show()
+
+# Drill down into a specific strategy
+single = report["04a159e7"]
+single.show()
+```
+
+## Self-contained HTML
+
+The biggest architectural decision was dropping Plotly entirely. Every chart is now rendered with HTML5 Canvas — equity curves, drawdown series, rolling Sharpe, metric comparisons, everything.
+
+The output is a single `.html` file with all CSS and JavaScript inlined. No CDN, no external dependencies, no network requests. You can email it, commit it to a repo, or open it on an airplane.
+
+The dashboard includes:
+
+| Feature | Single Strategy | Multi-Strategy |
+|---------|----------------|----------------|
+| Sidebar | Overview + individual runs | Overview + strategy names |
+| Overview KPIs | Summary metrics, runs table, equity overlay | Ranking table, normalized equity curves, metric bars |
+| Detail pages | Overview · Performance · Trades · Risk | Summary · Runs · Performance |
+| Charts | Canvas-based, zero JS dependencies | Canvas-based, zero JS dependencies |
+| Theme | Dark/light toggle | Dark/light toggle |
+
+## Multi-strategy comparison
+
+When you have `N > 1` strategies, the dashboard switches to comparison mode automatically. The overview page shows:
+
+- **Ranking table** — all strategies sorted by CAGR, with Sharpe, Sortino, Calmar, Win Rate, and Max Drawdown columns
+- **Normalized equity curves** — overlaid on a single chart, starting from 100% so different initial amounts are comparable
+- **Metric bar charts** — 2×2 grid comparing CAGR, Sharpe, Max DD, and Win Rate across strategies
+
+Click any strategy in the ranking table to filter the equity curves and comparison charts. Or use the strategy selection modal to pick specific strategies to compare.
+
+## Scaling to 200+ strategies
+
+After the initial redesign worked, I ran it with 200 strategies and the browser choked. Pre-rendering every strategy page meant 600+ canvas elements and thousands of DOM nodes on initial load.
+
+The [follow-up PR](https://github.com/coding-kitties/investing-algorithm-framework/pull/429) fixed this with three optimizations:
+
+**LTTB downsampling** — Equity curves, drawdown series, and rolling Sharpe are capped at 300 data points using the Largest-Triangle-Three-Buckets algorithm. This reduces inline JSON size dramatically while preserving visual fidelity. You can't tell the difference on screen.
+
+**Lazy rendering** — Per-strategy detail pages (charts, trades, orders) are created in JavaScript on first visit instead of pre-rendering in the Jinja template. The DOM stays small until you actually click into a strategy.
+
+**Auto-select top 10** — When more than 10 strategies are present, the overview shows the top 10 by CAGR instead of rendering all. You can change the selection through the strategy modal.
+
+The result: 58 reporting tests pass, HTML file sizes stay manageable even with 200+ strategies, and initial page load is fast.
+
+## Storage format
+
+The framework uses a hierarchical directory structure for backtest results:
+
+```
+backtest_results/
+└── batch_1/
+    ├── strategy_a/
+    │   ├── algorithm_id.json
+    │   ├── summary.json
+    │   └── runs/
+    │       ├── backtest_EUR_20240101_20241231/
+    │       │   ├── metrics.json
+    │       │   └── run.json
+    │       └── backtest_EUR_20240331_20250331/
+    │           ├── metrics.json
+    │           └── run.json
+    ├── strategy_b/
+    │   └── ...
+    └── ...
+```
+
+`BacktestReport.open()` walks this structure automatically. Point it at a strategy directory for a single-strategy report, or at a batch directory for multi-strategy comparison.
+
+## The batch API
+
+To support multi-strategy workflows, I added `app.run_vector_backtests()` (plural):
+
+```python
+results = app.run_vector_backtests(
+    strategies=strategies,
+    backtest_date_ranges=backtest_windows,
+    initial_amount=1000,
+    output_directory="./backtest_results/batch_1",
+)
+# Returns: Dict[str, List[Backtest]]
+```
+
+This runs every strategy across every date range, persists the results to disk if `output_directory` is set, and returns a dictionary keyed by strategy ID. Feed the dictionary straight to `BacktestReport()` for instant visualization.
+
+## Why this matters
+
+When you're developing quantitative strategies, iteration speed matters. The old report forced you into a single-run, single-strategy workflow. Now you can:
+
+- Compare 50 parameter variations in a single dashboard
+- Identify which strategy performs best across different market conditions
+- Drill down from comparison to individual strategy analysis
+- Share self-contained reports with collaborators — just send the HTML file
+- Load and re-analyze results from disk weeks later
+
+The full implementation is in the [investing-algorithm-framework](https://github.com/coding-kitties/investing-algorithm-framework) — check out the [main PR](https://github.com/coding-kitties/investing-algorithm-framework/pull/420) for the redesign and the [performance PR](https://github.com/coding-kitties/investing-algorithm-framework/pull/429) for the scaling optimizations.

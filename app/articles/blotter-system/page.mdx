@@ -1,0 +1,174 @@
+export const metadata = {
+  title: "Building a Blotter System for the Investing Algorithm Framework",
+  description:
+    "How I added a blotter system with pluggable slippage, commission, and fill models to make backtests actually realistic.",
+  alternates: {
+    canonical: "/articles/blotter-system",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Software Engineering
+</div>
+
+# Building a Blotter System for the Investing Algorithm Framework
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  June 2025
+</div>
+</div>
+
+If you've ever backtested a trading strategy and thought _"these results look too good"_, you're probably right. Most backtesting engines assume perfect fills — your order goes in at exactly the price you specified, with zero fees, and the market has infinite liquidity. That's not how it works.
+
+I just merged a [blotter system](https://github.com/coding-kitties/investing-algorithm-framework/pull/474) into the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) that fixes this. Here's how it works and why it matters.
+
+## What is a blotter?
+
+In traditional finance, a blotter is the record of all trades made during a session — the trade diary. In the context of an algorithmic trading framework, it's more than that. It's the layer that sits between your strategy and order execution:
+
+<div className="my-8 flex justify-center">
+  <img src="/assets/blotter-architecture.svg" alt="Blotter architecture diagram showing order flow from Strategy through Blotter to OrderService, OrderExecutor, and Exchange or Simulation" className="w-full max-w-[720px]" />
+</div>
+
+Every order, whether it's a market buy, limit sell, or a batch of rebalancing trades, flows through the blotter before hitting the order service. This gives you a single interception point to apply slippage, calculate commissions, record transactions, and even implement custom order routing.
+
+## The design
+
+I wanted the blotter to be:
+
+1. **Composable** — swap out slippage and commission models independently
+2. **Extensible** — subclass `Blotter` for custom routing logic (e.g. smart order routing, TWAP)
+3. **Transparent** — record every fill as a `Transaction` for post-hoc analysis
+4. **Zero-config** — just works out of the box, no setup required
+
+The framework auto-selects the right blotter based on the execution mode:
+
+| Mode | Default Blotter | Behavior |
+|------|----------------|----------|
+| Live trading | `DefaultBlotter` | Pass-through — no slippage or commission |
+| Backtesting | `SimulationBlotter` | Configurable slippage, commission, and fill models |
+
+If you want control, call `app.set_blotter(...)` with any `Blotter` subclass.
+
+## Slippage models
+
+Slippage is the difference between the price you expect and the price you actually get. In a backtest, you need to model this or your results are lying to you.
+
+The framework ships with three built-in models:
+
+**NoSlippage** — orders fill at the exact intended price. This is the default, and it's fine if you're just prototyping.
+
+**PercentageSlippage** — buy orders fill slightly higher, sell orders slightly lower. A `0.1%` slippage on a buy at `100.0` fills at `100.10`:
+
+```python
+app.set_blotter(SimulationBlotter(
+    slippage_model=PercentageSlippage(percentage=0.001)
+))
+```
+
+**FixedSlippage** — adds or subtracts a fixed amount per order.
+
+**VolumeImpactSlippage** — slippage scales with order size relative to available volume. Larger orders in illiquid markets get worse fills. This is the most realistic model for anything beyond small caps.
+
+And if none of these fit, you subclass `SlippageModel` and implement `calculate_slippage`:
+
+```python
+class MySlippage(SlippageModel):
+    def calculate_slippage(self, price, order_side, amount=None):
+        # Your logic here
+        ...
+```
+
+## Commission models
+
+Same story for fees. Three built-in options:
+
+- **NoCommission** — zero fees (default)
+- **PercentageCommission** — fee as a percentage of trade value
+- **FixedCommission** — flat fee per trade
+
+And the same extensibility — subclass `CommissionModel` for tiered pricing, maker/taker splits, or whatever your broker charges:
+
+```python
+class TieredCommission(CommissionModel):
+    def calculate_commission(self, price, amount, order_side):
+        trade_value = price * amount
+        if trade_value > 10000:
+            return trade_value * 0.0005  # 0.05% for large trades
+        return trade_value * 0.001      # 0.1% for small trades
+```
+
+## Fill models and partial fills
+
+This is where it gets interesting. Real markets don't always fill your entire order. If you're trading 10,000 shares and the candle only had 50,000 volume, you can't assume a full fill.
+
+The `FillModel` controls how much of an order gets filled per evaluation:
+
+- **FullFill** — everything fills immediately (default)
+- **VolumeBasedFill** — fill amount is capped at a percentage of the candle's volume
+
+```python
+app.set_blotter(SimulationBlotter(
+    fill_model=VolumeBasedFill(max_volume_pct=0.1)  # max 10% of candle volume
+))
+```
+
+With `VolumeBasedFill`, an order might take multiple candles to fully fill. The framework tracks `filled` and `remaining` amounts on each order, re-evaluating on every new candle until the order is complete.
+
+## Transactions
+
+Every fill gets recorded as a `Transaction` — a detailed record of what actually happened:
+
+```python
+transactions = context.get_transactions()
+for tx in transactions:
+    print(f"{tx.symbol} {tx.order_side}: "
+          f"price={tx.price}, amount={tx.amount}, "
+          f"commission={tx.commission}, slippage={tx.slippage}")
+```
+
+Each transaction captures: `order_id`, `symbol`, `order_side`, the actual fill `price` (after slippage), `amount`, total `cost`, `commission`, `slippage`, and `timestamp`. This gives you a complete audit trail for analyzing execution quality.
+
+## Batch ordering
+
+The blotter also supports batch ordering — placing multiple orders in a single call:
+
+```python
+context.batch_order([
+    {"target_symbol": "BTC", "order_side": "BUY", "price": 50000, "amount": 0.1},
+    {"target_symbol": "ETH", "order_side": "BUY", "price": 3000, "amount": 1.0},
+])
+```
+
+The default implementation places orders sequentially. Override `batch_order()` in a custom blotter for atomic batch behavior or smart order routing across venues.
+
+## What changed under the hood
+
+This wasn't a small change — 2,161 additions and 724 deletions across 20 files. The key architectural shifts:
+
+- **All orders now route through the blotter.** Previously, `Context` called `OrderService.create()` directly. Now every `create_order()`, `create_limit_order()`, and `create_market_order()` call goes through `self._blotter.place_order()`.
+
+- **Removed `BacktestOrderExecutor`.** The old approach used a separate order executor for backtesting. The blotter replaces this — `OrderBacktestService` handles execution directly, and the `SimulationBlotter` provides the simulation behavior.
+
+- **Stop-loss and take-profit orders route through the blotter.** The `TradeOrderEvaluator` now uses `self._create_order()` which delegates to the blotter, ensuring SL/TP fills are also subject to slippage and commission.
+
+- **43 unit tests** covering all models, edge cases, partial fills, and the full integration path.
+
+## Why this matters
+
+If you're building a trading strategy, the gap between backtest performance and live performance is called _slippage and fees_. Most frameworks either ignore this or make it hard to configure.
+
+With the blotter system, you can:
+
+- Run a backtest with realistic slippage and commission assumptions
+- Compare results across different fee structures
+- Model partial fills in illiquid markets
+- Build custom order routing logic without touching framework internals
+- Audit every single fill after the fact
+
+The whole thing is available in the [investing-algorithm-framework](https://github.com/coding-kitties/investing-algorithm-framework) on GitHub. Check out the [PR](https://github.com/coding-kitties/investing-algorithm-framework/pull/474) if you want to see the full diff.

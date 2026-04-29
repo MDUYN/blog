@@ -1,0 +1,133 @@
+export const metadata = {
+  title: "A Stability Score for Bounded Trading Metrics",
+  description:
+    "Why CV-based consistency breaks down for win rates and Sharpe ratios — and how a normalized-std stability score gives you a more intuitive measure for bounded metrics.",
+  alternates: {
+    canonical: "/articles/stability-score",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Investing Algorithm Framework
+</div>
+
+# A Stability Score for Bounded Trading Metrics
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  April 2026
+</div>
+</div>
+
+In [the previous article](/articles/consistency-score) I described the consistency score the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) uses to measure how reliably a strategy reproduces its performance across walk-forward windows. That score is built on the coefficient of variation (CV), which is scale-invariant and works well for unbounded metrics like returns.
+
+But CV has a sharp edge: **it falls apart when the mean is near zero**, and it gives counter-intuitive answers for metrics that live on a known, bounded scale. Win rate is naturally between 0 and 100. Sharpe ratio is meaningfully bounded in practice — somewhere around -2 to +4. For these, a different formulation works better.
+
+That's the **stability score**.
+
+<div className="my-8 flex justify-center">
+  <img src="/assets/stability-vs-cv.svg" alt="Two side-by-side bar charts comparing per-window win rates of two strategies. Strategy A has win rates of 45, 50, 55 — CV consistency 0.90, stability 0.80. Strategy B has win rates of 1, 2, 3 — CV consistency 0.00, stability 0.80. Both have the same standard deviation, but CV is misled by Strategy B's tiny mean while stability correctly identifies them as equally tight." className="w-full max-w-[760px]" />
+</div>
+
+The picture above is the whole argument in one frame. Both strategies have the same per-window standard deviation (σ ≈ 5). CV says they're _wildly_ different — 0.90 versus 0.00 — because Strategy B's mean is small. Stability says they're identically tight, which is what you actually want to know about a bounded metric.
+
+## Why a second score, and why not reuse existing ones?
+
+Once I had the consistency score working, the obvious question was: _why not just use it for everything?_ The answer is that CV-based scoring quietly produces nonsense for bounded metrics, and the existing alternatives didn't fit either.
+
+- **[`pyfolio.stability_of_timeseries`](https://github.com/quantopian/pyfolio/blob/master/pyfolio/timeseries.py)** is the most-cited "stability" metric in open-source quant code. It's the R² of a linear fit to cumulative log returns — i.e. _how straight is the equity curve?_ That's a useful number, but it operates on the equity curve itself, not on per-window aggregate metrics like win rate or Sharpe. You can't apply it to "the win rates of these 12 walk-forward windows."
+- **CV / consistency score** breaks down when the mean is small relative to the natural scale of the metric. Win rates of `1%, 2%, 3%` have a tiny absolute spread but a huge CV — the score reports "wildly inconsistent" when the strategy is in fact _reliably losing in the same way every window_. That's the wrong answer for a bounded metric.
+- **[Deflated Sharpe Ratio](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1821643)** is rigorous but produces a probability around a single Sharpe value. It doesn't generalize to "stability of win rate" or "stability of profitable-window ratio."
+- **[Walk-Forward Efficiency](https://www.wiley.com/en-us/The+Evaluation+and+Optimization+of+Trading+Strategies%2C+2nd+Edition-p-9780470128015)** is a ratio of OOS to IS performance. It says nothing about how much that OOS performance _wobbles_ window-to-window.
+
+What I actually wanted for bounded metrics was direct: pick a sensible "very unstable" reference (`σ_max`) for that metric, scale the observed σ against it, and put the result in `[0, 1]`. No mean in the denominator, no edge cases at zero, no R² fits, no probability theory. Just _how tightly do the per-window values cluster, on a scale you can interpret without a footnote?_
+
+That's what the stability score is, and it only exists because no off-the-shelf metric handled bounded per-window aggregates the way I needed for the framework's backtest report.
+
+## Normalized standard deviation
+
+Instead of normalizing σ by the mean, the stability score normalizes by a **domain-specific maximum standard deviation** — `stability = 1 - σ / σ_max`.
+
+```python
+def get_normalized_stability(values, max_std):
+    if len(values) < 2:
+        return None
+    mean = sum(values) / len(values)
+    var = sum((x - mean) ** 2 for x in values) / (len(values) - 1)
+    std = math.sqrt(var)
+    return max(0.0, min(1.0, 1.0 - std / max_std))
+```
+
+The result lives in `[0, 1]` and has a direct interpretation: a stability of `0.9` means the per-window standard deviation is 10% of what you've decided "very unstable" looks like for this metric.
+
+## Why this is better for bounded metrics
+
+Take win rate, which is bounded to `[0, 100]`. Suppose a strategy has per-window win rates of `45, 50, 55`. The mean is 50, σ ≈ 5, CV = 0.1. So the CV-based score reports a consistency of `0.9`.
+
+Now consider a strategy with per-window win rates of `1, 2, 3`. Same shape, same σ, but a tiny mean. CV = 5/2 = 2.5, so the consistency score reports `0.0`. Maximally inconsistent.
+
+That's mathematically correct — but practically, the second strategy is also _maximally consistent in the way it loses_. The win rate doesn't fluctuate; it's just low. CV is the wrong tool here because the mean is the denominator and the meaningful scale is set externally, not by the data itself.
+
+The stability score sidesteps this by anchoring to a fixed `max_std` chosen for the metric:
+
+- **Win rate**: `max_std` ≈ 25 (a strategy whose win rate moves ±25 percentage points window-to-window is wildly unstable).
+- **Sharpe ratio**: `max_std` ≈ 1.5.
+- **Returns**: stability is _less_ useful here — there's no natural ceiling. Stick with the CV-based consistency.
+
+Both `45, 50, 55` and `1, 2, 3` get the same stability score, because the _spread_ is what's being measured, not the spread relative to the mean. That's the right answer for win rate.
+
+## The composite
+
+Stability composes the same way consistency does: weighted by component, with the same 35/25/20/20 split for returns, win rate, Sharpe, and profitable-window ratio.
+
+```python
+def get_stability_score(
+    return_stability,
+    win_rate_stability,
+    sharpe_stability,
+    number_of_profitable_windows=None,
+    number_of_windows=None,
+):
+    return _composite(
+        return_stability,
+        win_rate_stability,
+        sharpe_stability,
+        number_of_profitable_windows,
+        number_of_windows,
+    )
+```
+
+Internally both scores share `_composite()` — only the per-component normalization differs. That keeps the two scores comparable: a stability of 0.8 and a consistency of 0.8 mean the same _shape_ of result, just measured against different references.
+
+## Consistency vs stability — when to use which
+
+Both scores answer the same question: _how reliable is this strategy across windows?_ But they answer it through different lenses:
+
+| Score | Normalization | Best for | Watch out for |
+|---|---|---|---|
+| Consistency | σ / |μ| (CV) | Returns, P&L, anything unbounded | Mean ≈ 0 → score collapses to 0 |
+| Stability | σ / σ\_max | Win rate, Sharpe, bounded metrics | Requires a sensible `max_std` per metric |
+
+In practice the framework computes **both** and exposes them in the backtest report. They tend to agree on great strategies and bad strategies. Where they disagree is informative — usually the disagreement points at something interesting in the underlying distributions, like a strategy whose returns are tight but whose win rates swing wildly.
+
+## Prior art
+
+The word "stability" is overloaded in quant trading. A few specific things people already mean by it, none of which are quite this:
+
+- **`pyfolio.timeseries.stability_of_timeseries`** — Quantopian's pyfolio shipped a metric literally called _stability_, defined as the R² of a linear fit to cumulative log returns. Same name, very different formulation. [pyfolio source](https://github.com/quantopian/pyfolio/blob/master/pyfolio/timeseries.py).
+- **Probabilistic / Deflated Sharpe Ratio** — [Bailey & López de Prado, 2014](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1821643). Treats Sharpe-ratio stability as a probability of exceeding a threshold given sample size and higher moments.
+- **Combinatorial Purged Cross-Validation (CPCV)** — Marcos López de Prado, [_Advances in Financial Machine Learning_ (2018)](https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086). Builds a distribution of Sharpe ratios over many train/test combinations and looks at its spread.
+- **Walk-Forward Efficiency** — Robert Pardo, [_The Evaluation and Optimization of Trading Strategies_ (2008)](https://www.wiley.com/en-us/The+Evaluation+and+Optimization+of+Trading+Strategies%2C+2nd+Edition-p-9780470128015). Different formulation again, but the same underlying question.
+- **Coefficient of variation** — the basis of the [companion consistency score](/articles/consistency-score). [Wikipedia](https://en.wikipedia.org/wiki/Coefficient_of_variation).
+
+What's new here is small but, I think, useful: explicitly **routing each metric to the right normalizer** — CV for unbounded things like returns, normalized σ for bounded things like win rate and Sharpe — and reporting both scores side-by-side in the same `[0, 1]` scale so they're directly comparable.
+
+## A note on `None`
+
+Both scores propagate `None` cleanly. Fewer than two windows → no score. Missing component → it's dropped from the composite and the remaining weights are renormalized. This matters more than it sounds: backtests don't always produce every metric for every window, and having the score quietly degrade rather than crash is a small but important quality-of-life improvement.
+
+If you're already using walk-forward backtests in the framework, both scores show up in your report automatically. The implementation is in pure Python, no dependencies, and small enough to read in one sitting.

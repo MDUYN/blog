@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480">
+  <style>
+    .bg { fill: var(--color-terminal-bg, #181a20); }
+    .box { fill: none; stroke: var(--color-terminal-cyan, #18ffff); stroke-width: 1.5; rx: 8; ry: 8; }
+    .box-alt { fill: none; stroke: var(--color-terminal-green, #00e676); stroke-width: 1.5; rx: 8; ry: 8; }
+    .box-accent { fill: none; stroke: var(--color-terminal-yellow, #ffd740); stroke-width: 1.5; rx: 8; ry: 8; }
+    .label { fill: var(--color-terminal-text, #e0e0e0); font-family: 'JetBrains Mono', monospace; font-size: 12px; text-anchor: middle; dominant-baseline: central; }
+    .label-sm { fill: var(--color-terminal-text-dim, #888); font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; dominant-baseline: central; }
+    .arrow { stroke: var(--color-terminal-text-dim, #888); stroke-width: 1.2; fill: none; marker-end: url(#arrowhead); }
+    .arrow-branch { stroke: var(--color-terminal-cyan, #18ffff); stroke-width: 1.2; fill: none; marker-end: url(#arrowhead-cyan); stroke-dasharray: 4 3; }
+    .divider { stroke: var(--color-terminal-text-dim, #888); stroke-width: 0.5; stroke-dasharray: 6 4; }
+    .section-label { fill: var(--color-terminal-text-dim, #888); font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: start; dominant-baseline: central; font-style: italic; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-text-dim, #888)" stroke-width="1.2" />
+    </marker>
+    <marker id="arrowhead-cyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-cyan, #18ffff)" stroke-width="1.2" />
+    </marker>
+  </defs>
+
+  <rect width="800" height="480" class="bg" rx="12" />
+
+  <!-- Section: Data Sources -->
+  <text x="30" y="30" class="section-label">DATA SOURCES</text>
+  <line x1="20" y1="40" x2="220" y2="40" class="divider" />
+
+  <!-- Live Backtests box -->
+  <rect x="40" y="60" width="160" height="50" class="box" />
+  <text x="120" y="78" class="label">run_vector_</text>
+  <text x="120" y="93" class="label">backtests()</text>
+
+  <!-- Disk Storage box -->
+  <rect x="40" y="140" width="160" height="50" class="box" />
+  <text x="120" y="158" class="label">BacktestReport</text>
+  <text x="120" y="173" class="label">.open(path)</text>
+
+  <!-- Section: Report Engine -->
+  <text x="290" y="30" class="section-label">REPORT ENGINE</text>
+  <line x1="280" y1="40" x2="520" y2="40" class="divider" />
+
+  <!-- BacktestReport -->
+  <rect x="300" y="85" width="190" height="80" class="box-alt" />
+  <text x="395" y="108" class="label">BacktestReport</text>
+  <text x="395" y="128" class="label-sm">strategies: Dict</text>
+  <text x="395" y="145" class="label-sm">_generate_html()</text>
+
+  <!-- Arrows from data sources to report -->
+  <line x1="200" y1="85" x2="298" y2="115" class="arrow" />
+  <line x1="200" y1="165" x2="298" y2="135" class="arrow" />
+
+  <!-- Section: Detection -->
+  <text x="310" y="200" class="label-sm">len(strategies)</text>
+
+  <!-- Decision diamond-ish (simplified) -->
+  <line x1="395" y1="165" x2="395" y2="220" class="arrow" />
+
+  <!-- Branch labels -->
+  <text x="290" y="240" class="label-sm">== 1</text>
+  <text x="500" y="240" class="label-sm">&gt; 1</text>
+
+  <!-- Branch lines -->
+  <line x1="395" y1="225" x2="270" y2="290" class="arrow-branch" />
+  <line x1="395" y1="225" x2="530" y2="290" class="arrow-branch" />
+
+  <!-- Section: Output -->
+  <text x="30" y="280" class="section-label">OUTPUT</text>
+  <line x1="20" y1="290" x2="780" y2="290" class="divider" />
+
+  <!-- Single Strategy Dashboard -->
+  <rect x="140" y="310" width="240" height="140" class="box-accent" />
+  <text x="260" y="335" class="label">Single-Strategy</text>
+  <text x="260" y="352" class="label">Dashboard</text>
+  <text x="260" y="380" class="label-sm">Equity · Drawdown</text>
+  <text x="260" y="395" class="label-sm">Trades · Risk</text>
+  <text x="260" y="410" class="label-sm">Monthly Heatmap</text>
+  <text x="260" y="430" class="label-sm">Rolling Sharpe</text>
+
+  <!-- Multi-Strategy Dashboard -->
+  <rect x="430" y="310" width="240" height="140" class="box-accent" />
+  <text x="550" y="335" class="label">Multi-Strategy</text>
+  <text x="550" y="352" class="label">Comparison</text>
+  <text x="550" y="380" class="label-sm">Ranking Table</text>
+  <text x="550" y="395" class="label-sm">Equity Overlay (%)</text>
+  <text x="550" y="410" class="label-sm">Metric Bars</text>
+  <text x="550" y="430" class="label-sm">Per-Strategy Drill-down</text>
+
+  <!-- Zero deps badge -->
+  <rect x="580" y="55" width="180" height="35" class="box-alt" />
+  <text x="670" y="73" class="label-sm">Zero Dependencies</text>
+
+  <!-- Canvas badge -->
+  <rect x="580" y="100" width="180" height="35" class="box" />
+  <text x="670" y="118" class="label-sm">Canvas-Based Charts</text>
+
+  <!-- Theme badge -->
+  <rect x="580" y="145" width="180" height="35" class="box" />
+  <text x="670" y="163" class="label-sm">Dark / Light Theme</text>
+</svg>

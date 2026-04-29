@@ -1,0 +1,162 @@
+export const metadata = {
+  title: "Adding Currency/FX Conversion to the Investing Algorithm Framework",
+  description:
+    "How I added multi-currency portfolio support with pluggable FX rate providers so strategies can trade across markets in different currencies.",
+  alternates: {
+    canonical: "/articles/fx-conversion",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Investing Algorithm Framework
+</div>
+
+# Adding Currency/FX Conversion to the Investing Algorithm Framework
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  April 2026
+</div>
+</div>
+
+If you're trading AAPL on the NYSE in dollars and BP on the London Stock Exchange in pounds, what's your portfolio worth? The answer depends on the exchange rate — and until now, the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) had no way to handle this.
+
+I just added [currency/FX conversion support](https://github.com/coding-kitties/investing-algorithm-framework/pull/475) so multi-currency portfolios work correctly. Here's the problem, the design, and how it works.
+
+## The problem
+
+The framework already supported multiple markets and trading pairs, but portfolio calculations assumed everything was in a single currency. If your strategy traded assets denominated in USD, GBP, and JPY, the framework would sum those numbers as if they were all the same currency. That gives you a meaningless total.
+
+This matters for several reasons:
+
+1. **International equity strategies** span multiple currencies (USD, EUR, GBP, JPY)
+2. **Portfolio value** must be computed in a single base currency for meaningful performance metrics
+3. **Currency movements** affect returns of foreign-denominated assets
+4. **P&L calculations** are wrong if you mix currencies without conversion
+5. **Some strategies** explicitly trade currency effects
+
+## The design
+
+<div className="my-8 flex justify-center">
+  <img src="/assets/fx-conversion-flow.svg" alt="FX conversion architecture showing markets with local currencies flowing through FXRateProvider to compute portfolio value in a single base currency" className="w-full max-w-[720px]" />
+</div>
+
+The solution has three parts: a pluggable FX rate provider, currency-aware market configuration, and automatic conversion in the context API.
+
+### Setting up multi-currency markets
+
+You configure each market with its trading currency and set a base currency for portfolio reporting:
+
+```python
+from investing_algorithm_framework import create_app
+
+app = create_app()
+
+# Configure markets with their local currencies
+app.add_market(market="NYSE", trading_symbol="USD", initial_balance=50000)
+app.add_market(market="LSE", trading_symbol="GBP", initial_balance=30000)
+
+# Set the base currency for portfolio calculations
+app.set_base_currency("EUR")
+```
+
+Every position is now tracked with its denomination currency. When the framework computes portfolio value, it converts each position to the base currency using the registered FX rate provider.
+
+### The FXRateProvider interface
+
+FX rate providers follow the existing provider registration pattern — implement an abstract class and register it with the app:
+
+```python
+from investing_algorithm_framework import FXRateProvider
+
+class MyFXProvider(FXRateProvider):
+    def get_rate(self, from_currency, to_currency, date):
+        """Return the exchange rate for a currency pair at a given date."""
+        # Your implementation — API call, database lookup, etc.
+        ...
+
+app.add_fx_rate_provider(MyFXProvider())
+```
+
+The framework ships with `StaticFXRateProvider` as a built-in default. You give it a dictionary of rates and it handles the rest:
+
+```python
+from investing_algorithm_framework import StaticFXRateProvider
+
+provider = StaticFXRateProvider({
+    ("USD", "EUR"): 0.92,
+    ("GBP", "EUR"): 1.17,
+    ("JPY", "EUR"): 0.006,
+})
+
+app.add_fx_rate_provider(provider)
+```
+
+The `StaticFXRateProvider` supports inverse rates automatically — if you define `USD/EUR`, it can compute `EUR/USD` without you specifying it. Lookups are case-insensitive.
+
+### Context API
+
+Inside your strategy, the context exposes three new methods:
+
+```python
+class MultiCurrencyStrategy(TradingStrategy):
+    def run_strategy(self, context, data):
+        # Get the exchange rate between two currencies
+        usd_eur = context.get_fx_rate("USD", "EUR")
+
+        # Convert an amount to the base currency
+        eur_value = context.convert_to_base_currency(1000, "USD")
+
+        # Get total portfolio value in base currency
+        total = context.get_portfolio_value()  # In EUR
+```
+
+The key insight is that your strategy logic doesn't change. You still create orders with local prices in local currencies:
+
+```python
+        # Create orders in local currency — conversion is automatic
+        context.create_limit_order(
+            target_symbol="AAPL",
+            order_side=OrderSide.BUY,
+            percentage_of_portfolio=5.0,
+            price=180.0,  # USD price
+            market="NYSE"
+        )
+```
+
+The framework handles the conversion internally when computing portfolio allocations and performance metrics.
+
+## Why pluggable?
+
+You might wonder why I didn't just hardcode an API call to a free FX data source. A few reasons:
+
+- **Backtesting needs historical rates.** You can't use today's rate for a trade that happened in 2023.
+- **Different sources for different use cases.** A live trading system might use a real-time API, while a backtest might use a CSV of historical rates from the ECB.
+- **Offline development.** `StaticFXRateProvider` works without any network calls — useful for testing and development.
+- **Cost.** Some FX data APIs charge per request. You should control when and how often rates are fetched.
+
+The pluggable pattern keeps the framework flexible without baking in assumptions about where your FX data comes from.
+
+## Testing
+
+The implementation includes 17 unit tests covering:
+
+- `StaticFXRateProvider` rate lookups and inverse rate computation
+- Case-insensitive currency pair matching
+- Context integration (`get_fx_rate`, `convert_to_base_currency`, `get_portfolio_value`)
+- Multi-market portfolio value aggregation
+- Edge cases — missing rates, same-currency conversion
+
+## What's next
+
+This lays the groundwork for more sophisticated currency handling:
+
+- **Time-varying FX rates in backtests** — using historical rate series instead of static values
+- **FX hedging** — tracking currency exposure and adding hedge positions
+- **Currency-adjusted performance metrics** — separating alpha from currency effects
+
+The implementation is in the [investing-algorithm-framework](https://github.com/coding-kitties/investing-algorithm-framework) on GitHub — the feature shipped as part of the [v8.2 release](https://github.com/coding-kitties/investing-algorithm-framework/pull/475).

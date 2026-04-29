@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" fill="none">
+  <style>
+    .box     { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1.5; rx: 6; }
+    .box-hl  { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-green, #00e676); stroke-width: 2; rx: 6; }
+    .box-cyan { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-cyan, #18ffff); stroke-width: 1.5; rx: 6; }
+    .box-dim { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1; rx: 6; stroke-dasharray: 4,3; }
+    .label   { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; fill: var(--color-terminal-text, #c9d1d9); text-anchor: middle; dominant-baseline: central; }
+    .label-hl { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; fill: var(--color-terminal-green, #00e676); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+    .label-sm { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: var(--color-terminal-text-dim, #6b7b8d); text-anchor: middle; dominant-baseline: central; }
+    .label-tag { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 9px; fill: var(--color-terminal-cyan, #18ffff); text-anchor: middle; dominant-baseline: central; text-transform: uppercase; letter-spacing: 1px; }
+    .label-code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: var(--color-terminal-green, #00e676); text-anchor: start; dominant-baseline: central; }
+    .arrow   { stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1.5; fill: none; marker-end: url(#arr); }
+    .arrow-hl { stroke: var(--color-terminal-green, #00e676); stroke-width: 1.5; fill: none; marker-end: url(#arr-hl); }
+    .arrow-cyan { stroke: var(--color-terminal-cyan, #18ffff); stroke-width: 1.5; fill: none; marker-end: url(#arr-cyan); }
+    .dot     { fill: var(--color-terminal-green, #00e676); }
+    .dot-glow { fill: var(--color-terminal-green, #00e676); opacity: 0.3; }
+    .dot-cyan { fill: var(--color-terminal-cyan, #18ffff); }
+    .dot-cyan-glow { fill: var(--color-terminal-cyan, #18ffff); opacity: 0.3; }
+
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 0.12; }
+    }
+    .cache-glow {
+      fill: var(--color-terminal-cyan, #18ffff);
+      animation: glow-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes tag-cycle {
+      0%, 28% { opacity: 1; }
+      33%, 95% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    .tag-1 { animation: tag-cycle 9s ease-in-out infinite; }
+    .tag-2 { animation: tag-cycle 9s ease-in-out 3s infinite; }
+    .tag-3 { animation: tag-cycle 9s ease-in-out 6s infinite; }
+  </style>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="1.2"/>
+    </marker>
+    <marker id="arr-hl" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-green, #00e676)" stroke-width="1.2"/>
+    </marker>
+    <marker id="arr-cyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-cyan, #18ffff)" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- ═══ ROW 1: Two entry points ═══ -->
+
+  <!-- Left: DataSource.from_csv/json/parquet -->
+  <rect class="box-hl" x="40" y="30" width="280" height="62"/>
+  <text class="label-hl" x="180" y="52">DataSource.from_csv()</text>
+  <text class="label-tag tag-1" x="180" y="74">pre-declared · auto-fetched</text>
+  <text class="label-tag tag-2" x="180" y="74">from_json() · from_parquet()</text>
+  <text class="label-tag tag-3" x="180" y="74">in data_sources list</text>
+
+  <!-- Right: context.fetch_csv/json/parquet -->
+  <rect class="box-hl" x="400" y="30" width="280" height="62"/>
+  <text class="label-hl" x="540" y="52">context.fetch_csv()</text>
+  <text class="label-tag tag-1" x="540" y="74">on-demand · dynamic URL</text>
+  <text class="label-tag tag-2" x="540" y="74">fetch_json() · fetch_parquet()</text>
+  <text class="label-tag tag-3" x="540" y="74">inside run_strategy()</text>
+
+  <!-- Arrows converging to URL Fetch -->
+  <path class="arrow-hl" d="M180,92 L180,130 L310,130 L310,150"/>
+  <path class="arrow-hl" d="M540,92 L540,130 L410,130 L410,150"/>
+
+  <!-- Animated dots on left path -->
+  <circle class="dot-glow" r="6">
+    <animateMotion dur="5s" repeatCount="indefinite" keyTimes="0;0.3;0.6;1" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" calcMode="spline">
+      <mpath href="#pL"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot" r="3">
+    <animateMotion dur="5s" repeatCount="indefinite" keyTimes="0;0.3;0.6;1" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" calcMode="spline">
+      <mpath href="#pL"/>
+    </animateMotion>
+  </circle>
+  <path id="pL" d="M180,92 L180,130 L310,130 L310,150" fill="none" stroke="none"/>
+
+  <!-- Animated dots on right path -->
+  <circle class="dot-glow" r="6">
+    <animateMotion dur="5s" repeatCount="indefinite" keyTimes="0;0.3;0.6;1" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" calcMode="spline" begin="1.5s">
+      <mpath href="#pR"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot" r="3">
+    <animateMotion dur="5s" repeatCount="indefinite" keyTimes="0;0.3;0.6;1" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" calcMode="spline" begin="1.5s">
+      <mpath href="#pR"/>
+    </animateMotion>
+  </circle>
+  <path id="pR" d="M540,92 L540,130 L410,130 L410,150" fill="none" stroke="none"/>
+
+  <!-- ═══ ROW 2: URL Fetch ═══ -->
+  <rect class="box" x="260" y="150" width="200" height="44"/>
+  <text class="label" x="360" y="172">URL Fetch</text>
+
+  <!-- Arrow: Fetch → pre_process -->
+  <line class="arrow" x1="360" y1="194" x2="360" y2="240"/>
+
+  <!-- ═══ ROW 3: pre_process (optional) ═══ -->
+  <rect class="box-dim" x="260" y="240" width="200" height="38"/>
+  <text class="label-sm" x="360" y="259">pre_process(raw_text)</text>
+
+  <!-- Side annotation -->
+  <text class="label-sm" x="480" y="259" text-anchor="start" opacity="0.5">← optional, text formats only</text>
+
+  <!-- Arrow: pre_process → Cache -->
+  <line class="arrow" x1="360" y1="278" x2="360" y2="310"/>
+
+  <!-- ═══ ROW 4: Cache Layer (highlighted) ═══ -->
+  <rect class="cache-glow" x="210" y="308" width="300" height="68" rx="8"/>
+  <rect class="box-cyan" x="215" y="312" width="290" height="60"/>
+  <text class="label" x="360" y="332">Cache Layer</text>
+  <text class="label-sm" x="360" y="350">in-memory + file (MD5 hash)</text>
+  <text class="label-sm" x="360" y="364">refresh_interval: 1m → 1W</text>
+
+  <!-- Side annotation -->
+  <text class="label-sm" x="525" y="332" text-anchor="start" opacity="0.7">← resources/data/</text>
+  <text class="label-sm" x="525" y="348" text-anchor="start" opacity="0.5">S3 / Azure Blob sync</text>
+
+  <!-- Arrow: Cache → Parse -->
+  <line class="arrow-cyan" x1="360" y1="372" x2="360" y2="410"/>
+
+  <!-- Animated cyan dot -->
+  <circle class="dot-cyan-glow" r="6">
+    <animateMotion dur="5s" repeatCount="indefinite" keyTimes="0;0.3;0.6;1" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" calcMode="spline" begin="2.5s">
+      <mpath href="#pC"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot-cyan" r="3">
+    <animateMotion dur="5s" repeatCount="indefinite" keyTimes="0;0.3;0.6;1" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1" calcMode="spline" begin="2.5s">
+      <mpath href="#pC"/>
+    </animateMotion>
+  </circle>
+  <path id="pC" d="M360,372 L360,410" fill="none" stroke="none"/>
+
+  <!-- ═══ ROW 5: Parse + post_process → DataFrame ═══ -->
+  <rect class="box-dim" x="260" y="410" width="200" height="38"/>
+  <text class="label-sm" x="360" y="429">post_process(DataFrame)</text>
+
+  <text class="label-sm" x="480" y="429" text-anchor="start" opacity="0.5">← optional transform</text>
+
+  <!-- Arrow: post_process → DataFrame -->
+  <line class="arrow-cyan" x1="360" y1="448" x2="360" y2="478"/>
+
+  <!-- ═══ ROW 6: Output ═══ -->
+  <rect class="box-cyan" x="230" y="478" width="260" height="44"/>
+  <text class="label" x="360" y="494">data["identifier"]</text>
+  <text class="label-sm" x="360" y="510">Polars DataFrame</text>
+
+  <!-- Format badges on left side -->
+  <rect class="box" x="40" y="160" width="70" height="26"/>
+  <text class="label-sm" x="75" y="173">CSV</text>
+
+  <rect class="box" x="40" y="194" width="70" height="26"/>
+  <text class="label-sm" x="75" y="207">JSON</text>
+
+  <rect class="box" x="40" y="228" width="70" height="26"/>
+  <text class="label-sm" x="75" y="241">Parquet</text>
+
+  <!-- Dashed connectors from format badges -->
+  <line x1="110" y1="173" x2="260" y2="172" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="1" stroke-dasharray="4,4" opacity="0.3"/>
+  <line x1="110" y1="207" x2="250" y2="172" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="1" stroke-dasharray="4,4" opacity="0.3"/>
+  <line x1="110" y1="241" x2="260" y2="259" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="1" stroke-dasharray="4,4" opacity="0.3"/>
+</svg>

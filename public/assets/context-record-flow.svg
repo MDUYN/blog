@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" fill="none">
+  <style>
+    .box     { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1.5; rx: 6; }
+    .box-hl  { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-green, #00e676); stroke-width: 2; rx: 6; }
+    .box-cyan { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-cyan, #18ffff); stroke-width: 1.5; rx: 6; }
+    .label   { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; fill: var(--color-terminal-text, #c9d1d9); text-anchor: middle; dominant-baseline: central; }
+    .label-hl { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 14px; fill: var(--color-terminal-green, #00e676); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+    .label-sm { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: var(--color-terminal-text-dim, #6b7b8d); text-anchor: middle; dominant-baseline: central; }
+    .label-tag { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 9px; fill: var(--color-terminal-cyan, #18ffff); text-anchor: middle; dominant-baseline: central; text-transform: uppercase; letter-spacing: 1px; }
+    .label-code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: var(--color-terminal-green, #00e676); text-anchor: start; dominant-baseline: central; }
+    .arrow   { stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1.5; fill: none; marker-end: url(#arr); }
+    .arrow-hl { stroke: var(--color-terminal-green, #00e676); stroke-width: 1.5; fill: none; marker-end: url(#arr-hl); }
+    .arrow-cyan { stroke: var(--color-terminal-cyan, #18ffff); stroke-width: 1.5; fill: none; marker-end: url(#arr-cyan); }
+
+    .dot     { fill: var(--color-terminal-green, #00e676); }
+    .dot-glow { fill: var(--color-terminal-green, #00e676); opacity: 0.3; }
+    .dot-cyan { fill: var(--color-terminal-cyan, #18ffff); }
+    .dot-cyan-glow { fill: var(--color-terminal-cyan, #18ffff); opacity: 0.3; }
+
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 0.12; }
+    }
+    .record-glow {
+      fill: var(--color-terminal-green, #00e676);
+      animation: glow-pulse 3s ease-in-out infinite;
+    }
+
+    /* Cycling data type tags */
+    @keyframes tag-cycle {
+      0%, 28% { opacity: 1; }
+      33%, 95% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    .tag-1 { animation: tag-cycle 9s ease-in-out infinite; }
+    .tag-2 { animation: tag-cycle 9s ease-in-out 3s infinite; }
+    .tag-3 { animation: tag-cycle 9s ease-in-out 6s infinite; }
+
+    /* Value stream animation */
+    @keyframes val-stream {
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.5; }
+    }
+    .val-row { animation: val-stream 2s ease-in-out infinite; }
+    .val-row:nth-child(2) { animation-delay: 0.4s; }
+    .val-row:nth-child(3) { animation-delay: 0.8s; }
+  </style>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="1.2"/>
+    </marker>
+    <marker id="arr-hl" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-green, #00e676)" stroke-width="1.2"/>
+    </marker>
+    <marker id="arr-cyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-cyan, #18ffff)" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- ═══ ROW 1: Strategy ═══ -->
+  <rect class="box" x="235" y="30" width="250" height="44"/>
+  <text class="label" x="360" y="52">Strategy · on_run()</text>
+
+  <!-- Arrow: Strategy → context.record() -->
+  <line class="arrow-hl" x1="360" y1="74" x2="360" y2="140"/>
+
+  <!-- Animated dot: Strategy → record -->
+  <circle class="dot-glow" r="7">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline">
+      <mpath href="#p1"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot" r="3.5">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline">
+      <mpath href="#p1"/>
+    </animateMotion>
+  </circle>
+  <path id="p1" d="M360,74 L360,140" fill="none" stroke="none"/>
+
+  <!-- Code snippet on left -->
+  <text class="label-code" x="70" y="90">context.record(</text>
+  <text class="label-code val-row" x="86" y="104">rsi=70.5,</text>
+  <text class="label-code val-row" x="86" y="118">sma_20=100.0,</text>
+  <text class="label-code val-row" x="86" y="132">signal=0.85</text>
+  <text class="label-code" x="70" y="146">)</text>
+
+  <!-- Dashed connector from code to box -->
+  <line x1="200" y1="118" x2="235" y2="118" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>
+
+  <!-- ═══ ROW 2: context.record() (highlighted) ═══ -->
+  <rect class="record-glow" x="220" y="138" width="280" height="70" rx="8"/>
+  <rect class="box-hl" x="225" y="142" width="270" height="62"/>
+  <text class="label-hl" x="360" y="166">context.record()</text>
+
+  <!-- Cycling type tags -->
+  <text class="label-tag tag-1" x="360" y="188">float · int · str</text>
+  <text class="label-tag tag-2" x="360" y="188">dict · list · bool</text>
+  <text class="label-tag tag-3" x="360" y="188">any serializable value</text>
+
+  <!-- Arrow: record → _recorded_values -->
+  <line class="arrow-hl" x1="360" y1="204" x2="360" y2="270"/>
+
+  <!-- Animated dot: record → storage -->
+  <circle class="dot-glow" r="7">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="1s">
+      <mpath href="#p2"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot" r="3.5">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="1s">
+      <mpath href="#p2"/>
+    </animateMotion>
+  </circle>
+  <path id="p2" d="M360,204 L360,270" fill="none" stroke="none"/>
+
+  <!-- Side annotation -->
+  <text class="label-sm" x="530" y="166" text-anchor="start" opacity="0.7">← (datetime, value) tuples</text>
+  <text class="label-sm" x="530" y="182" text-anchor="start" opacity="0.5">no-op in live mode</text>
+
+  <!-- ═══ ROW 3: BacktestRun ═══ -->
+  <rect class="box" x="235" y="270" width="250" height="44"/>
+  <text class="label" x="360" y="292">BacktestRun</text>
+
+  <!-- Arrow: BacktestRun → recorded_values -->
+  <line class="arrow" x1="360" y1="314" x2="360" y2="380"/>
+
+  <!-- Animated dot -->
+  <circle class="dot-glow" r="6" opacity="0.2">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="2s">
+      <mpath href="#p3"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot" r="3" opacity="0.7">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="2s">
+      <mpath href="#p3"/>
+    </animateMotion>
+  </circle>
+  <path id="p3" d="M360,314 L360,380" fill="none" stroke="none"/>
+
+  <!-- ═══ ROW 4: recorded_values dict ═══ -->
+  <rect class="box-cyan" x="225" y="380" width="270" height="44"/>
+  <text class="label" x="360" y="402">.recorded_values</text>
+
+  <!-- Branches: DataFrame / Plot -->
+  <path class="arrow-cyan" d="M310,424 L180,424 L180,456"/>
+  <path class="arrow-cyan" d="M410,424 L540,424 L540,456"/>
+
+  <!-- ═══ ROW 5: Outputs ═══ -->
+  <rect class="box-cyan" x="100" y="456" width="160" height="44"/>
+  <text class="label" x="180" y="472">DataFrame</text>
+  <text class="label-sm" x="180" y="488">pandas · polars</text>
+
+  <rect class="box-cyan" x="460" y="456" width="160" height="44"/>
+  <text class="label" x="540" y="472">Plot / Analyse</text>
+  <text class="label-sm" x="540" y="488">matplotlib · custom</text>
+
+  <!-- Animated cyan dots on branches -->
+  <circle class="dot-cyan-glow" r="6">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="3s">
+      <mpath href="#p4l"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot-cyan" r="3">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="3s">
+      <mpath href="#p4l"/>
+    </animateMotion>
+  </circle>
+  <path id="p4l" d="M310,424 L180,424 L180,456" fill="none" stroke="none"/>
+
+  <circle class="dot-cyan-glow" r="6">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="3s">
+      <mpath href="#p4r"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot-cyan" r="3">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.2;0.5;0.7;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="3s">
+      <mpath href="#p4r"/>
+    </animateMotion>
+  </circle>
+  <path id="p4r" d="M410,424 L540,424 L540,456" fill="none" stroke="none"/>
+
+  <!-- Serialization annotation on right of BacktestRun -->
+  <text class="label-sm" x="520" y="292" text-anchor="start" opacity="0.7">← save / load (JSON)</text>
+</svg>

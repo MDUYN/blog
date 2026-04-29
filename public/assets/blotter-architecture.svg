@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 500" fill="none">
+  <style>
+    /* ── Theming ── */
+    .bg      { fill: var(--color-terminal-surface, #111827); }
+    .border  { stroke: var(--color-terminal-border, #1e2a3a); fill: none; stroke-width: 1.5; }
+    .box     { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1.5; rx: 6; }
+    .box-hl  { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-green, #00e676); stroke-width: 2; rx: 6; }
+    .label   { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; fill: var(--color-terminal-text, #c9d1d9); text-anchor: middle; dominant-baseline: central; }
+    .label-hl { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 14px; fill: var(--color-terminal-green, #00e676); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+    .label-sm { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: var(--color-terminal-text-dim, #6b7b8d); text-anchor: middle; dominant-baseline: central; }
+    .label-tag { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 9px; fill: var(--color-terminal-cyan, #18ffff); text-anchor: middle; dominant-baseline: central; text-transform: uppercase; letter-spacing: 1px; }
+    .arrow   { stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+    .arrow-hl { stroke: var(--color-terminal-green, #00e676); stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-hl); }
+
+    /* ── Animated order dot ── */
+    .order-dot { fill: var(--color-terminal-green, #00e676); }
+    .order-glow { fill: var(--color-terminal-green, #00e676); opacity: 0.3; }
+
+    /* ── Blotter glow pulse ── */
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 0.12; }
+    }
+    .blotter-glow {
+      fill: var(--color-terminal-green, #00e676);
+      animation: glow-pulse 3s ease-in-out infinite;
+    }
+
+    /* ── Tag fade-in ── */
+    @keyframes tag-cycle {
+      0%, 28% { opacity: 1; }
+      33%, 95% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    .tag-1 { animation: tag-cycle 9s ease-in-out infinite; }
+    .tag-2 { animation: tag-cycle 9s ease-in-out 3s infinite; }
+    .tag-3 { animation: tag-cycle 9s ease-in-out 6s infinite; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="1.2"/>
+    </marker>
+    <marker id="arrowhead-hl" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-green, #00e676)" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- ════════════════ ROW 1: Strategy ════════════════ -->
+  <rect class="box" x="270" y="30" width="180" height="44"/>
+  <text class="label" x="360" y="52">Strategy (Context)</text>
+
+  <!-- Arrow: Strategy → Blotter -->
+  <line class="arrow-hl" x1="360" y1="74" x2="360" y2="140"/>
+
+  <!-- Animated dot: Strategy → Blotter -->
+  <circle class="order-glow" r="7">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.15;0.5;0.65;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline">
+      <mpath href="#path-strategy-blotter"/>
+    </animateMotion>
+  </circle>
+  <circle class="order-dot" r="3.5">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.15;0.5;0.65;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline">
+      <mpath href="#path-strategy-blotter"/>
+    </animateMotion>
+  </circle>
+
+  <!-- Hidden motion path: Strategy → Blotter -->
+  <path id="path-strategy-blotter" d="M360,74 L360,140" fill="none" stroke="none"/>
+
+  <!-- ════════════════ ROW 2: Blotter (highlighted) ════════════════ -->
+  <rect class="blotter-glow" x="255" y="138" width="210" height="70" rx="8"/>
+  <rect class="box-hl" x="260" y="142" width="200" height="62"/>
+  <text class="label-hl" x="360" y="166">Blotter</text>
+
+  <!-- Cycling tags under the blotter label -->
+  <text class="label-tag tag-1" x="360" y="188">slippage</text>
+  <text class="label-tag tag-2" x="360" y="188">commission</text>
+  <text class="label-tag tag-3" x="360" y="188">routing</text>
+
+  <!-- Arrow: Blotter → OrderService -->
+  <line class="arrow-hl" x1="360" y1="204" x2="360" y2="270"/>
+
+  <!-- Animated dot: Blotter → OrderService -->
+  <circle class="order-glow" r="7">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.15;0.5;0.65;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="1s">
+      <mpath href="#path-blotter-order"/>
+    </animateMotion>
+  </circle>
+  <circle class="order-dot" r="3.5">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.15;0.5;0.65;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="1s">
+      <mpath href="#path-blotter-order"/>
+    </animateMotion>
+  </circle>
+
+  <path id="path-blotter-order" d="M360,204 L360,270" fill="none" stroke="none"/>
+
+  <!-- ════════════════ ROW 3: OrderService ════════════════ -->
+  <rect class="box" x="270" y="270" width="180" height="44"/>
+  <text class="label" x="360" y="292">OrderService</text>
+
+  <!-- Arrow: OrderService → OrderExecutor -->
+  <line class="arrow" x1="360" y1="314" x2="360" y2="370"/>
+
+  <!-- Animated dot: OrderService → OrderExecutor -->
+  <circle class="order-glow" r="6" opacity="0.2">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.15;0.5;0.65;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="2s">
+      <mpath href="#path-order-exec"/>
+    </animateMotion>
+  </circle>
+  <circle class="order-dot" r="3" opacity="0.7">
+    <animateMotion dur="4s" repeatCount="indefinite" keyTimes="0;0.15;0.5;0.65;1" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1;0 0 1 1" calcMode="spline" begin="2s">
+      <mpath href="#path-order-exec"/>
+    </animateMotion>
+  </circle>
+
+  <path id="path-order-exec" d="M360,314 L360,370" fill="none" stroke="none"/>
+
+  <!-- ════════════════ ROW 4: OrderExecutor ════════════════ -->
+  <rect class="box" x="270" y="370" width="180" height="44"/>
+  <text class="label" x="360" y="392">OrderExecutor</text>
+
+  <!-- Branches: Exchange / Simulation -->
+  <!-- Left branch arrow -->
+  <path class="arrow" d="M310,414 L200,414 L200,436"/>
+  <!-- Right branch arrow -->
+  <path class="arrow" d="M410,414 L520,414 L520,436"/>
+
+  <!-- ════════════════ ROW 5: Destinations ════════════════ -->
+  <!-- Exchange -->
+  <rect class="box" x="120" y="436" width="160" height="44"/>
+  <text class="label" x="200" y="458">Exchange</text>
+  <text class="label-sm" x="200" y="474">live</text>
+
+  <!-- Simulation -->
+  <rect class="box" x="440" y="436" width="160" height="44"/>
+  <text class="label" x="520" y="458">Simulation</text>
+  <text class="label-sm" x="520" y="474">backtest</text>
+
+  <!-- ════════════════ Side annotations ════════════════ -->
+  <!-- Transaction recording label -->
+  <text class="label-sm" x="540" y="172" text-anchor="start" opacity="0.7">← records Transaction</text>
+
+  <!-- Vertical dashed line on the left showing the "interception point" -->
+  <line x1="240" y1="100" x2="240" y2="220" stroke="var(--color-terminal-green, #00e676)" stroke-width="1" stroke-dasharray="4,4" opacity="0.3"/>
+</svg>

@@ -1,0 +1,175 @@
+export const metadata = {
+  title: "Python Multiprocessing: Why Your Code Is Slow on Windows",
+  description:
+    "Fork vs spawn, why it matters for Python parallelization, and how to fix it — with a real-world example from the Investing Algorithm Framework.",
+  alternates: {
+    canonical: "/articles/parallel-backtest-windows",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Software Engineering · Python
+</div>
+
+# Python Multiprocessing: Why Your Code Is Slow on Windows
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  April 2026
+</div>
+</div>
+
+You write a Python program that uses `ProcessPoolExecutor` to parallelize some heavy work. It runs great on macOS or Linux. Then someone runs it on Windows and it's _slower_ than the sequential version.
+
+This is one of the most common cross-platform gotchas in Python, and it comes down to a single concept: how the operating system creates new processes.
+
+## Fork vs Spawn
+
+When Python's `multiprocessing` module creates a new process, it uses a _start method_. There are two that matter:
+
+| Start method | Default on | How it works |
+|-------------|----------|-------------|
+| **fork** | macOS, Linux | Copies the parent process's memory space. The child inherits everything — all loaded data, open files, imported modules — via copy-on-write. |
+| **spawn** | Windows, WSL | Starts a brand new Python interpreter from scratch. Everything the child needs must be serialized (pickled), sent over a pipe, and deserialized. |
+
+On fork-based systems, the child process gets a snapshot of the parent's memory for free. A worker that needs access to a 500 MB DataFrame already has it — it was inherited at fork time.
+
+On spawn-based systems, that same 500 MB DataFrame must be pickled, sent to the child process, and unpickled from scratch. And if you're not careful, this happens _every time you submit a task_ — not just once per worker.
+
+## The naive approach: passing data per task
+
+A common pattern when using `ProcessPoolExecutor` is to pass everything the worker needs as arguments:
+
+```python
+with ProcessPoolExecutor(max_workers=4) as executor:
+    for task in tasks:
+        executor.submit(worker_fn, task, large_shared_data)
+```
+
+On fork-based systems, `large_shared_data` is already in the worker's memory. Python still pickles the reference, but it's cheap — the actual data isn't copied.
+
+On spawn-based systems, `large_shared_data` is pickled and sent to the worker **for every `submit()` call**. If you submit 100 tasks, that's 100 full serializations of your entire dataset. The I/O and CPU overhead from all this pickling can easily exceed the time saved by parallelizing.
+
+## The fix: use `initializer`
+
+`ProcessPoolExecutor` has a built-in mechanism for this: the `initializer` parameter. It runs a function once when each worker process starts, before any tasks are submitted:
+
+```python
+# Module-level global — set by each worker at startup
+_shared_data = None
+
+def _init_worker(data):
+    """Called once per worker process at startup."""
+    global _shared_data
+    _shared_data = data
+
+def worker_fn(task):
+    # Access shared data from module global
+    data = _shared_data
+    # ... do work ...
+
+with ProcessPoolExecutor(
+    max_workers=4,
+    initializer=_init_worker,
+    initargs=(large_shared_data,),
+) as executor:
+    for task in tasks:
+        executor.submit(worker_fn, task)
+```
+
+Now on spawn-based systems, the data is pickled **4 times** (once per worker) instead of **100 times** (once per task). On fork-based systems, nothing changes — the initializer still runs but it's cheap either way.
+
+This is exactly what the `initializer` API was designed for. If you have large read-only state that all workers need, don't fight the serialization model — use the tool Python gives you.
+
+## Real-world example: Investing Algorithm Framework
+
+I ran into this exact problem in the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework). The framework supports running backtests in parallel — distributing strategy batches across multiple workers. Each worker needs access to a `data_provider_service` that holds all loaded market data (OHLCV DataFrames, order books, etc.).
+
+The original code passed the data provider as part of each task's arguments:
+
+```python
+for batch in strategy_batches:
+    worker_args.append((
+        batch,
+        backtest_date_range,
+        portfolio_configuration,
+        self._data_provider_service.copy(),  # Pickled per task!
+        dynamic_position_sizing,
+    ))
+```
+
+On macOS this was fine. On Windows, running 50 strategy batches meant serializing the entire dataset 50 times. The fix was straightforward — move the data provider into the `initializer`:
+
+```python
+shared_data_provider = self._data_provider_service.copy()
+
+with ProcessPoolExecutor(
+    max_workers=n_workers,
+    initializer=_init_worker,
+    initargs=(shared_data_provider,),
+) as ex:
+    # Tasks pass None for data_provider — worker reads the global
+    ...
+```
+
+Workers fall back to the module-level global when the task argument is `None`:
+
+```python
+def _run_batch_backtest_worker(args):
+    # ... unpack args ...
+    if data_provider_service is None:
+        data_provider_service = _worker_data_provider_service
+    # ... run backtest ...
+```
+
+The full change is in [PR #481](https://github.com/coding-kitties/investing-algorithm-framework/pull/481).
+
+## Progress tracking across workers
+
+Parallel progress tracking is another area where fork vs spawn matters. A common approach is wrapping `as_completed(futures)` with `tqdm` — but that only shows progress per _batch_, not per individual unit of work.
+
+The better approach is a shared counter using `multiprocessing.Manager`:
+
+```python
+manager = multiprocessing.Manager()
+progress_counter = manager.Value('i', 0)
+```
+
+Each worker increments the counter after completing a unit of work. A monitoring thread in the parent process polls it and updates a `tqdm` bar:
+
+```python
+def _monitor_progress():
+    while not stop_event.is_set():
+        pbar.n = progress_counter.value
+        pbar.refresh()
+        stop_event.wait(0.5)
+
+monitor = threading.Thread(target=_monitor_progress, daemon=True)
+monitor.start()
+```
+
+`Manager().Value()` works across both fork and spawn because it uses a separate manager process with proxied access. It's slightly slower than shared memory, but it's portable and simple.
+
+## Other cross-platform traps
+
+Once you start testing on Windows, a whole category of Unix assumptions surface:
+
+| Pattern | Problem on Windows | Fix |
+|---------|-------------------|-----|
+| `/tmp/output.html` | `/tmp` doesn't exist | `tempfile.gettempdir()` |
+| `f"file://{path}"` | Backslashes and drive letters break URIs | `Path(path).as_uri()` |
+| `f"sqlite:///{path}"` | Backslashes in URIs | `"sqlite:///" + path.replace("\\", "/")` |
+
+These are trivial to fix but easy to miss when your entire CI pipeline runs on Linux.
+
+## Summary
+
+- **fork** (macOS/Linux) gives workers free access to the parent's memory. **spawn** (Windows/WSL) starts fresh — everything must be pickled.
+- Passing large data per `submit()` call is fine on fork, catastrophic on spawn.
+- Use `ProcessPoolExecutor`'s `initializer` to send large shared state once per worker.
+- Use `multiprocessing.Manager().Value()` for cross-process progress tracking that works everywhere.
+- Test on Windows or WSL if you ship cross-platform Python code. `fork` hides a lot of sins.

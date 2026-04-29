@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 460" fill="none">
+  <style>
+    .panel    { fill: #f4f6fa; stroke: #c9d2dd; stroke-width: 1.5; rx: 8; }
+    .axis     { stroke: #c9d2dd; stroke-width: 1; fill: none; }
+    .gridline { stroke: #e2e7ee; stroke-width: 1; stroke-dasharray: 2 3; fill: none; }
+    .bar-good { fill: #00a85a; }
+    .bar-bad  { fill: #d44; }
+    .dot-good { fill: #00a85a; }
+    .dot-bad  { fill: #d44; }
+    .title    { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 16px; fill: #1a1a2e; font-weight: 700; }
+    .subtitle { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; fill: #4a5260; }
+    .caption  { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11px; fill: #4a5260; }
+    .axis-label { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: #6b7b8d; }
+    .score-box-good { fill: #e8f7ee; stroke: #00a85a; stroke-width: 1.5; rx: 4; }
+    .score-box-bad  { fill: #fbeaea; stroke: #d44; stroke-width: 1.5; rx: 4; }
+    .score-label    { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: #4a5260; text-anchor: middle; }
+    .score-value-good { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 18px; fill: #00a85a; font-weight: 700; text-anchor: middle; }
+    .score-value-bad  { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 18px; fill: #d44; font-weight: 700; text-anchor: middle; }
+    .verdict  { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; fill: #1a1a2e; font-weight: 600; }
+
+    @media (prefers-color-scheme: dark) {
+      .panel    { fill: #111827; stroke: #1e2a3a; }
+      .axis     { stroke: #1e2a3a; }
+      .gridline { stroke: #1a2330; }
+      .bar-good { fill: #00e676; }
+      .bar-bad  { fill: #ff7d7d; }
+      .dot-good { fill: #00e676; }
+      .dot-bad  { fill: #ff7d7d; }
+      .title    { fill: #ffffff; }
+      .subtitle { fill: #8a98ab; }
+      .caption  { fill: #8a98ab; }
+      .axis-label { fill: #6b7b8d; }
+      .score-box-good { fill: #0f2418; stroke: #00e676; }
+      .score-box-bad  { fill: #2a1313; stroke: #ff7d7d; }
+      .score-label    { fill: #8a98ab; }
+      .score-value-good { fill: #00e676; }
+      .score-value-bad  { fill: #ff7d7d; }
+      .verdict  { fill: #ffffff; }
+    }
+  </style>
+
+  <!-- Title row -->
+  <text x="20" y="22" class="title">Same spread, very different consistency. Same stability.</text>
+  <text x="20" y="42" class="subtitle">Win rate (%) across three walk-forward windows. Both strategies have σ ≈ 5.</text>
+
+  <!-- LEFT panel: 45, 50, 55 -->
+  <rect x="20" y="60" width="350" height="240" class="panel" />
+  <text x="36" y="82" class="caption">Strategy A · win rates 45 · 50 · 55</text>
+
+  <!-- y-axis grid lines (0-100 mapped to y 100..280) -->
+  <line x1="50"  y1="100" x2="350" y2="100" class="gridline" />
+  <line x1="50"  y1="145" x2="350" y2="145" class="gridline" />
+  <line x1="50"  y1="190" x2="350" y2="190" class="gridline" />
+  <line x1="50"  y1="235" x2="350" y2="235" class="gridline" />
+  <line x1="50"  y1="280" x2="350" y2="280" class="gridline" />
+  <text x="46" y="103" class="axis-label" text-anchor="end">100</text>
+  <text x="46" y="148" class="axis-label" text-anchor="end">75</text>
+  <text x="46" y="193" class="axis-label" text-anchor="end">50</text>
+  <text x="46" y="238" class="axis-label" text-anchor="end">25</text>
+  <text x="46" y="283" class="axis-label" text-anchor="end">0</text>
+
+  <!-- y-axis -->
+  <line x1="50" y1="100" x2="50" y2="280" class="axis" />
+
+  <!-- bars: x positions 110, 200, 290 ; bar width 40 ; bottom = 280 -->
+  <!-- 45 → height = 45/100 * 180 = 81 → top = 199 -->
+  <rect x="90"  y="199" width="40" height="81"  class="bar-good" />
+  <rect x="180" y="190" width="40" height="90"  class="bar-good" />
+  <rect x="270" y="181" width="40" height="99"  class="bar-good" />
+  <text x="110" y="296" class="axis-label" text-anchor="middle">W1: 45</text>
+  <text x="200" y="296" class="axis-label" text-anchor="middle">W2: 50</text>
+  <text x="290" y="296" class="axis-label" text-anchor="middle">W3: 55</text>
+
+  <!-- mean line at 50 → y = 190 -->
+  <line x1="60" y1="190" x2="340" y2="190" stroke="#00a85a" stroke-width="1" stroke-dasharray="4 3" opacity="0.6" />
+
+  <!-- score boxes for left -->
+  <rect x="36"  y="320" width="150" height="58" class="score-box-good" />
+  <text x="111" y="338" class="score-label">CV consistency</text>
+  <text x="111" y="362" class="score-value-good">0.90</text>
+
+  <rect x="200" y="320" width="150" height="58" class="score-box-good" />
+  <text x="275" y="338" class="score-label">stability</text>
+  <text x="275" y="362" class="score-value-good">0.80</text>
+
+  <!-- RIGHT panel: 1, 2, 3 -->
+  <rect x="390" y="60" width="350" height="240" class="panel" />
+  <text x="406" y="82" class="caption">Strategy B · win rates 1 · 2 · 3</text>
+
+  <line x1="420" y1="100" x2="720" y2="100" class="gridline" />
+  <line x1="420" y1="145" x2="720" y2="145" class="gridline" />
+  <line x1="420" y1="190" x2="720" y2="190" class="gridline" />
+  <line x1="420" y1="235" x2="720" y2="235" class="gridline" />
+  <line x1="420" y1="280" x2="720" y2="280" class="gridline" />
+  <text x="416" y="103" class="axis-label" text-anchor="end">100</text>
+  <text x="416" y="148" class="axis-label" text-anchor="end">75</text>
+  <text x="416" y="193" class="axis-label" text-anchor="end">50</text>
+  <text x="416" y="238" class="axis-label" text-anchor="end">25</text>
+  <text x="416" y="283" class="axis-label" text-anchor="end">0</text>
+
+  <line x1="420" y1="100" x2="420" y2="280" class="axis" />
+
+  <!-- 1 → height = 1.8 → top = 278.2 -->
+  <rect x="460" y="278.2" width="40" height="1.8"  class="bar-bad" />
+  <rect x="550" y="276.4" width="40" height="3.6"  class="bar-bad" />
+  <rect x="640" y="274.6" width="40" height="5.4"  class="bar-bad" />
+  <text x="480" y="296" class="axis-label" text-anchor="middle">W1: 1</text>
+  <text x="570" y="296" class="axis-label" text-anchor="middle">W2: 2</text>
+  <text x="660" y="296" class="axis-label" text-anchor="middle">W3: 3</text>
+
+  <!-- mean line at 2 → y = 276.4 -->
+  <line x1="430" y1="276.4" x2="710" y2="276.4" stroke="#d44" stroke-width="1" stroke-dasharray="4 3" opacity="0.6" />
+
+  <!-- score boxes for right -->
+  <rect x="406" y="320" width="150" height="58" class="score-box-bad" />
+  <text x="481" y="338" class="score-label">CV consistency</text>
+  <text x="481" y="362" class="score-value-bad">0.00</text>
+
+  <rect x="570" y="320" width="150" height="58" class="score-box-good" />
+  <text x="645" y="338" class="score-label">stability</text>
+  <text x="645" y="362" class="score-value-good">0.80</text>
+
+  <!-- Verdict footer -->
+  <text x="20" y="412" class="verdict">CV says: "wildly different." Stability says: "identically tight."</text>
+  <text x="20" y="432" class="caption">Same σ ≈ 5, same `max_std = 25` → same stability of 0.80. CV is misled by the tiny mean of Strategy B.</text>
+  <text x="20" y="450" class="caption">Use stability for bounded metrics like win rate and Sharpe; use CV-based consistency for unbounded returns.</text>
+</svg>

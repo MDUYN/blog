@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" fill="none">
+  <style>
+    .panel    { fill: #f4f6fa; stroke: #c9d2dd; stroke-width: 1.5; rx: 6; }
+    .baseline { stroke: #c9d2dd; stroke-width: 1; stroke-dasharray: 3 3; fill: none; }
+    .curve-a  { stroke: #00a85a; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .curve-b  { stroke: #0aa6b8; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .curve-loss { stroke: #d44; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .title    { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 15px; fill: #1a1a2e; font-weight: 700; }
+    .caption  { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11px; fill: #4a5260; }
+    .badge    { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: #1a1a2e; text-anchor: end; font-weight: 600; }
+    .badge-good { fill: #00a85a; }
+    .badge-bad  { fill: #d44; }
+    .footer   { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: #4a5260; }
+
+    @media (prefers-color-scheme: dark) {
+      .panel    { fill: #111827; stroke: #1e2a3a; }
+      .baseline { stroke: #1e2a3a; }
+      .curve-a  { stroke: #00e676; }
+      .curve-b  { stroke: #18ffff; }
+      .curve-loss { stroke: #ff7d7d; }
+      .title    { fill: #ffffff; }
+      .caption  { fill: #8a98ab; }
+      .badge    { fill: #c9d1d9; }
+      .badge-good { fill: #00e676; }
+      .badge-bad  { fill: #ff7d7d; }
+      .footer   { fill: #8a98ab; }
+    }
+  </style>
+
+  <!-- title -->
+  <text x="20" y="20" class="title">Same average return, very different consistency</text>
+
+  <!-- Strategy A caption -->
+  <text x="20" y="48" class="caption">Strategy A · per-window returns +25%, +24%, +26% · consistency 0.94</text>
+
+  <!-- Strategy A panels (top row, py=58, h=110) -->
+  <rect x="20"  y="58" width="220" height="110" class="panel" />
+  <rect x="250" y="58" width="220" height="110" class="panel" />
+  <rect x="480" y="58" width="220" height="110" class="panel" />
+
+  <!-- baselines at v=100 (y = py + 70) -->
+  <line x1="32"  y1="128" x2="228" y2="128" class="baseline" />
+  <line x1="262" y1="128" x2="458" y2="128" class="baseline" />
+  <line x1="492" y1="128" x2="688" y2="128" class="baseline" />
+
+  <!-- A curves -->
+  <polyline class="curve-a" points="32,134 54,133 76,131 97,129 119,127 141,125 163,123 184,122 206,120 228,119" />
+  <polyline class="curve-a" points="262,134 284,135 306,133 327,130 349,129 371,126 393,124 414,123 436,121 458,120" />
+  <polyline class="curve-a" points="492,134 514,132 536,130 557,128 579,126 601,124 623,123 644,121 666,120 688,118" />
+
+  <!-- A badges -->
+  <text x="232" y="74" class="badge badge-good">+25%</text>
+  <text x="462" y="74" class="badge badge-good">+24%</text>
+  <text x="692" y="74" class="badge badge-good">+26%</text>
+
+  <!-- A window labels -->
+  <text x="28"  y="162" class="caption">Window 1</text>
+  <text x="258" y="162" class="caption">Window 2</text>
+  <text x="488" y="162" class="caption">Window 3</text>
+
+  <!-- Strategy B caption -->
+  <text x="20" y="200" class="caption">Strategy B · per-window returns +92%, -32%, +18% · consistency 0.18</text>
+
+  <!-- Strategy B panels (bottom row, py=210, h=110) -->
+  <rect x="20"  y="210" width="220" height="110" class="panel" />
+  <rect x="250" y="210" width="220" height="110" class="panel" />
+  <rect x="480" y="210" width="220" height="110" class="panel" />
+
+  <!-- baselines at v=100 (y = py + 70) -->
+  <line x1="32"  y1="280" x2="228" y2="280" class="baseline" />
+  <line x1="262" y1="280" x2="458" y2="280" class="baseline" />
+  <line x1="492" y1="280" x2="688" y2="280" class="baseline" />
+
+  <!-- B curves -->
+  <polyline class="curve-b" points="32,284 54,278 76,269 97,257 119,248 141,242 163,239 184,235 206,231 228,229" />
+  <polyline class="curve-loss" points="262,284 284,287 306,291 327,296 349,299 371,301 393,302 414,303 436,304 458,303" />
+  <polyline class="curve-b" points="492,284 514,283 536,281 557,280 579,278 601,277 623,276 644,274 666,274 688,273" />
+
+  <!-- B badges -->
+  <text x="232" y="226" class="badge badge-good">+92%</text>
+  <text x="462" y="226" class="badge badge-bad">-32%</text>
+  <text x="692" y="226" class="badge badge-good">+18%</text>
+
+  <!-- B window labels -->
+  <text x="28"  y="314" class="caption">Window 1</text>
+  <text x="258" y="314" class="caption">Window 2</text>
+  <text x="488" y="314" class="caption">Window 3</text>
+
+  <!-- footer -->
+  <text x="20" y="356" class="footer">Mean return ≈ +25% for both. Sharpe and total return barely tell them apart.</text>
+  <text x="20" y="370" class="footer">The composite score collapses the per-window distribution into one number you can sort on.</text>
+</svg>

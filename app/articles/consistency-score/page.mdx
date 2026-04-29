@@ -1,0 +1,135 @@
+export const metadata = {
+  title: "Measuring Strategy Consistency Across Walk-Forward Windows",
+  description:
+    "How I added a CV-based consistency score to the Investing Algorithm Framework so you can tell the difference between a strategy that's reliably profitable and one that got lucky in a single window.",
+  alternates: {
+    canonical: "/articles/consistency-score",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Investing Algorithm Framework
+</div>
+
+# Measuring Strategy Consistency Across Walk-Forward Windows
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  April 2026
+</div>
+</div>
+
+A strategy that returns 200% in one walk-forward window and -40% in the next has the same average as one that returns 80% in both. The averages lie. What you actually want to know is: **how reliably does this strategy reproduce its results?**
+
+The [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) now exposes a **consistency score** for exactly this. It's a single number in `[0, 1]` that captures how repeatable a strategy's performance is across walk-forward windows.
+
+<div className="my-8 flex justify-center">
+  <img src="/assets/consistency-windows.svg" alt="Six equity curves arranged in two rows. Top row shows three windows of a strategy with consistent +24-26% returns. Bottom row shows three windows of a different strategy with returns of +92%, -32%, and +18%. Both strategies have a mean window return of about +25%, but only the top one is consistent." className="w-full max-w-[760px]" />
+</div>
+
+Both strategies above average about +25% per window. Headline metrics — mean return, total compounded return, even Sharpe — will rank them as roughly equivalent. But the bottom strategy lost a third of its capital in one window. Anyone running it live would have stopped trading before window 3 ever happened. The consistency score is the metric that tells these two apart at a glance.
+
+## Why not just use what already exists?
+
+This wasn't an obvious thing to build. There are already several reliability-related metrics in the quant trading world — I spent some time with each before deciding none of them quite fit what I needed in a backtest report.
+
+- **[Walk-Forward Efficiency](https://www.wiley.com/en-us/The+Evaluation+and+Optimization+of+Trading+Strategies%2C+2nd+Edition-p-9780470128015)** (Pardo) compares out-of-sample to in-sample performance. Useful, but it answers a different question: _did optimization overfit?_ It doesn't tell you whether the OOS results themselves are reliable across windows.
+- **[System Quality Number](https://vantharp.com/tharps-thoughts/the-sqn-system-quality-number/)** (Van Tharp) is `mean(R) / std(R) × √N`. It works on a single equity curve's per-trade R-multiples, not on per-window summary metrics. The √N term also conflates "reliable" with "lots of trades", which isn't always what you want.
+- **[Probabilistic and Deflated Sharpe Ratio](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1821643)** (Bailey & López de Prado) are excellent but produce a probability about a single Sharpe number; they don't tell you whether _win rates_ or _profitable-window ratios_ also held up. Implementation is also non-trivial.
+- **[CPCV](https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086)** (López de Prado) gives you a distribution of Sharpes across purged train/test combinations — closest in spirit to what I wanted, but it's a research tool, not something a casual user reads at a glance.
+- **[`pyfolio.stability_of_timeseries`](https://github.com/quantopian/pyfolio/blob/master/pyfolio/timeseries.py)** computes the R² of a linear fit to cumulative log returns. That measures _how straight the equity curve is_, which is correlated with consistency but not the same thing — a strategy with chunky, lumpy wins can still be reliably profitable across windows.
+
+The thing I actually wanted was simpler: **walk-forward, look at the per-window distribution of the metrics that matter, collapse it into one number a user can sort on**. Returns, win rate, Sharpe, _and_ how often the strategy was profitable — all in `[0, 1]`, all in the same report row, all readable without a textbook open.
+
+Picking a single existing metric and shipping that would have meant either lying about what it measures or making users stitch four metrics together themselves. The consistency score is what falls out when you commit to "one number, multiple components, opinionated weights."
+
+## The core idea: coefficient of variation
+
+The consistency score is built on the [coefficient of variation (CV)](https://en.wikipedia.org/wiki/Coefficient_of_variation) — the ratio of standard deviation to the absolute mean, `CV = σ / |μ|`.
+
+CV is **scale-invariant**, which is exactly what you want when comparing returns across strategies with different magnitudes. A strategy averaging 5% with σ = 1% (CV = 0.2) is more consistent than one averaging 50% with σ = 30% (CV = 0.6), even though the second has a much higher absolute volatility.
+
+To turn CV into a "higher is better" score in `[0, 1]`, we invert and clip:
+
+```python
+def get_cv_consistency(values):
+    if len(values) < 2:
+        return None
+    mean = sum(values) / len(values)
+    if abs(mean) < 1e-9:
+        return 0.0
+    var = sum((x - mean) ** 2 for x in values) / (len(values) - 1)
+    cv = math.sqrt(var) / abs(mean)
+    return max(0.0, min(1.0, 1.0 - cv))
+```
+
+Two edge cases worth flagging:
+
+- **Mean ≈ 0** → return `0.0`. CV blows up to infinity when the mean is near zero, so a strategy whose per-window returns average to nothing is treated as maximally inconsistent.
+- **CV > 1** → clipped to `0.0`. When σ exceeds |μ|, the strategy's noise dominates its signal.
+
+## Composing the score
+
+Returns alone don't tell the whole story. A strategy can have consistent returns with wildly inconsistent win rates, or vice versa. The composite consistency score combines four signals:
+
+| Component | Weight | What it captures |
+|---|---|---|
+| Per-window returns | 35% | Headline performance reliability |
+| Per-window win rates | 25% | Behavioral consistency of trade outcomes |
+| Per-window Sharpe | 20% | Risk-adjusted reliability |
+| Profitable window ratio | 20% | Fraction of windows that ended in the green |
+
+```python
+def get_consistency_score(
+    return_consistency,
+    win_rate_consistency,
+    sharpe_consistency,
+    number_of_profitable_windows=None,
+    number_of_windows=None,
+):
+    return _composite(
+        return_consistency,
+        win_rate_consistency,
+        sharpe_consistency,
+        number_of_profitable_windows,
+        number_of_windows,
+    )
+```
+
+Each component is independently allowed to be `None`. The composite re-normalizes its weights over whatever components are available, so a backtest that doesn't compute Sharpe still produces a sensible score from the other three.
+
+## Why a profitable-window ratio?
+
+CV captures spread, but it's symmetric — a strategy whose windows are `+10%, +30%, +50%` looks similar to one whose windows are `-10%, +30%, +70%` in CV terms. The first never lost money. The second lost money in a third of its windows. Adding the **profitable window ratio** explicitly rewards strategies that don't have losing periods, regardless of how tight or wide their distribution of returns is.
+
+## When to use it
+
+This score is most useful in two settings:
+
+1. **Walk-forward analysis.** Run your strategy across N rolling windows, collect per-window metrics, and compute consistency. A high score is evidence that the edge isn't a single-window fluke.
+2. **Strategy ranking.** When you have a shortlist of candidates with similar absolute returns, consistency tends to be a better tiebreaker than another decimal of mean return.
+
+It's not a substitute for absolute performance — a strategy that consistently returns 0.5% per year scores great on consistency and is still a bad strategy. Pair it with the metrics you already trust.
+
+## Prior art
+
+The building blocks here aren't new — measuring _how reliably_ a strategy reproduces its edge is one of the oldest problems in quant trading. A few specific reference points worth knowing about:
+
+- **Coefficient of variation on returns** — textbook statistic, the same one used here. [Wikipedia](https://en.wikipedia.org/wiki/Coefficient_of_variation) is the cleanest reference.
+- **System Quality Number (SQN)** — Van Tharp's `mean(R) / std(R) × √N`, essentially an inverse-CV adjusted for sample size. [Van Tharp Institute overview](https://vantharp.com/tharps-thoughts/the-sqn-system-quality-number/).
+- **Walk-Forward Efficiency (WFE)** — Robert Pardo, [_The Evaluation and Optimization of Trading Strategies_ (2008)](https://www.wiley.com/en-us/The+Evaluation+and+Optimization+of+Trading+Strategies%2C+2nd+Edition-p-9780470128015). The ratio of out-of-sample to in-sample performance across rolling windows. Same intent — did the edge hold up window-to-window?
+- **Combinatorial Purged Cross-Validation (CPCV)** — Marcos López de Prado, [_Advances in Financial Machine Learning_ (2018)](https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086). Builds a distribution of Sharpe ratios over many purged train/test combinations; closest in spirit to what's happening here.
+- **Probabilistic / Deflated Sharpe Ratio** — [Bailey & López de Prado, 2014](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1821643). Treats Sharpe-ratio stability as a probability of exceeding a threshold given sample size and higher moments.
+- **Profitable-window counts** — standard in commercial walk-forward reports (TradeStation, MultiCharts, Amibroker), and discussed extensively in Pardo.
+
+What's new in this score is the **specific composite**: CV-based consistency on returns, win rate, and Sharpe, weighted with a profitable-window ratio, all rolled up into a single number in `[0, 1]`. Plenty of backtesters expose the components; not many ship a single weighted score that's safe to use as a sort key.
+
+## What's next
+
+The consistency score sits next to a sibling metric — a **stability score** — that approaches the same problem from a different angle: instead of CV, it normalizes against a domain-specific maximum standard deviation. That's covered in [a separate article](/articles/stability-score), because they answer subtly different questions and you'll often want both.
+
+The implementation is a few dozen lines of pure Python with no dependencies. If you're running walk-forward backtests with the framework, you get the score for free in your backtest report.
