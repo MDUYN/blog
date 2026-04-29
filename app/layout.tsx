@@ -16,18 +16,18 @@ export const metadata: Metadata = {
   },
   description:
     "Quantitative trading, open source, and software engineering. Creator of Finterion.",
-  metadataBase: new URL("https://marcvanduyn.dev"),
+  metadataBase: new URL("https://mduyn.github.io/blog"),
   openGraph: {
     title: "Marc van Duyn",
     description:
       "Quantitative trading, open source, and software engineering. Creator of Finterion.",
-    url: "https://marcvanduyn.dev",
+    url: "https://mduyn.github.io/blog",
     siteName: "Marc van Duyn",
     locale: "en_US",
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/blog/og-image.png",
         width: 1200,
         height: 630,
         alt: "Marc van Duyn — Software Engineer, Quantitative Trading, Open Source",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     title: "Marc van Duyn",
     description:
       "Quantitative trading, open source, and software engineering. Creator of Finterion.",
-    images: ["/og-image.png"],
+    images: ["/blog/og-image.png"],
   },
 };
 

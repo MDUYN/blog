@@ -1,4 +1,4 @@
-const SITE_URL = "https://marcvanduyn.dev";
+const SITE_URL = "https://mduyn.github.io/blog";
 
 export const dynamic = "force-static";
 

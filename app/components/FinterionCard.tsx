@@ -1,5 +1,7 @@
 "use client";
 
+import { withBasePath } from "../lib/base-path";
+
 export default function FinterionCard() {
   return (
     <div className="my-8 rounded-lg border border-[var(--color-terminal-border)] bg-[var(--color-terminal-surface)] p-5">
@@ -11,12 +13,12 @@ export default function FinterionCard() {
           className="shrink-0"
         >
           <img
-            src="/assets/finterion-dark.png"
+            src={withBasePath("/assets/finterion-dark.png")}
             alt="Finterion"
             className="logo-dark h-8"
           />
           <img
-            src="/assets/finterion-light.png"
+            src={withBasePath("/assets/finterion-light.png")}
             alt="Finterion"
             className="logo-light h-8"
           />
