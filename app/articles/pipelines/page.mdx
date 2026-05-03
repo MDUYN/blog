@@ -1,0 +1,176 @@
+export const metadata = {
+  title: "Pipelines: Cross-Sectional Factor Computation in the Investing Algorithm Framework",
+  description:
+    "How I added a Pipeline API to the Investing Algorithm Framework so strategies can compute factors across many symbols in one shot, with no per-symbol loops and no look-ahead.",
+  alternates: {
+    canonical: "/articles/pipelines",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+import Img from "../../components/Img";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Investing Algorithm Framework
+</div>
+
+# Pipelines: Cross-Sectional Factor Computation in One Shot
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  May 2026
+</div>
+</div>
+
+If you have ever written a strategy that ranks 200 symbols by momentum, restricts trading to the top 100 by dollar volume, or runs the _same_ indicator stack across a basket, you have probably written some version of this:
+
+```python
+for symbol in self.symbols:
+    df = self.get_ohlcv(symbol)
+    df["sma"] = df["close"].rolling(50).mean()
+    df["mom"] = df["close"].pct_change(30)
+    scores[symbol] = df.iloc[-1]["mom"]
+
+ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
+top = ranked[:10]
+```
+
+It works. It is also slow, repetitive, and easy to get wrong, especially around look-ahead. The [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) now has a **Pipeline** API that does this properly. You declare your factors once, you get a tidy `(symbol × factor)` DataFrame on every iteration, and the engine handles the panel construction, the truncation, and the masking.
+
+This article describes how it works, why I made it opt-in from day one, and what the data path looks like end-to-end.
+
+## What you write
+
+The whole thing is declarative. A pipeline is a class. Each class attribute is either a `Factor` (a per-symbol time series) or a `Filter` (a boolean mask), and `universe` is the reserved name for the master mask:
+
+```python
+from investing_algorithm_framework import (
+    AverageDollarVolume,
+    Pipeline,
+    Returns,
+    TradingStrategy,
+)
+
+class MomentumScreener(Pipeline):
+    dollar_volume = AverageDollarVolume(window=30)
+    momentum = Returns(window=30)
+
+    universe = dollar_volume.top(100)        # tradeable universe
+    alpha = momentum.rank(mask=universe)     # rank within universe
+
+
+class MyStrategy(TradingStrategy):
+    pipelines = [MomentumScreener]
+
+    def run_strategy(self, context, data):
+        screen = data["MomentumScreener"]    # Polars DataFrame
+        top = screen.sort("alpha", descending=True).head(10)
+        ...
+```
+
+What you get back in `data["MomentumScreener"]` is a Polars DataFrame with **one row per surviving symbol** and **one column per factor**. The `universe` column is dropped from the output. Its job is to gate the rows, not to clutter the result.
+
+## The data path
+
+<div className="my-8 flex justify-center">
+  <Img src="/assets/pipeline-flow.svg" alt="Pipeline data flow: many OHLCV symbols flow into a long-form panel truncated at the current bar, factors are computed in vectorised Polars, the universe mask filters rows, and a wide DataFrame is emitted with one row per surviving symbol." className="w-full max-w-[760px]" />
+</div>
+
+On every iteration, for every strategy that declares a non-empty `pipelines` list, the engine does five things:
+
+1. **Collects** the OHLCV data sources the strategy already depends on.
+2. **Stacks** them into a long-form panel `(datetime, symbol, open, high, low, close, volume)` and truncates it at the current bar so no factor can see the future.
+3. **Evaluates** each declared `Factor` per symbol in vectorised Polars.
+4. **Masks** every column with `universe` (if set), keeping only symbols where the universe is `True` on the current bar.
+5. **Emits** a wide DataFrame keyed by the pipeline class name, available to your strategy as `data["YourPipelineClassName"]`.
+
+Step 3 is the one that makes this worth doing. A naïve implementation evaluates every factor for every symbol independently, which is exactly the loop everyone writes by hand. The pipeline engine instead groups by symbol once, runs each factor as a Polars expression over the whole panel, and shares sub-expression results via a per-evaluation cache. If `momentum` appears in two composite alphas, it is computed once.
+
+## Factors, filters, and the algebra
+
+The Phase 1 surface is small but covers the common cases:
+
+| Factor | Inputs | Description |
+| --- | --- | --- |
+| `Returns(window)` | close | `close[t] / close[t - window] - 1` |
+| `AverageDollarVolume(window)` | close, volume | rolling mean of `close * volume` |
+| `SMA(window)` | close | simple moving average |
+| `RSI(window)` | close | Wilder's RSI |
+| `Volatility(window, periods_per_year=252)` | close | annualised stdev of log returns |
+
+Anything not on that list, you write yourself by subclassing `CustomFactor`.
+
+`Filter` is the other primitive. It is a boolean per-bar mask. `factor.top(n)` and `factor.bottom(n)` return filters, and assigning one to `universe` makes it the master mask for the whole pipeline.
+
+Cross-sectional ops give you ranking without leaving the declarative layer:
+
+```python
+factor.rank(mask=universe)   # ascending ordinal rank within each bar
+factor.top(n)                # boolean mask: top-n by descending value
+factor.bottom(n)             # boolean mask: bottom-n by ascending value
+```
+
+Phase 2 added per-bar normalisation operators. Each takes an optional `mask` so the statistic is computed only over the surviving universe:
+
+```python
+factor.zscore(mask=universe)             # (x - mean) / std per bar
+factor.demean(mask=universe)             # x - mean per bar
+factor.winsorize(0.01, 0.99,             # clip to per-bar quantiles
+                 mask=universe)
+```
+
+The interesting edge case here is `zscore` when only one symbol survives the mask. The cross-sectional std is zero, which would normally yield `inf` or `NaN`. The implementation returns `null` instead, and masked-out symbols are excluded from both the bar's statistic and the bar's output.
+
+Factors compose. Standard arithmetic operators are overloaded, scalars are auto-coerced, and the per-evaluation cache means repeated sub-expressions are free:
+
+```python
+class MyScreener(Pipeline):
+    momentum = Returns(window=30)
+    vol = Volatility(window=30)
+
+    universe = AverageDollarVolume(window=30).top(100)
+
+    # Composite alphas. `momentum` is computed once even though it
+    # appears in two terms.
+    risk_adjusted = momentum / vol
+    score = (
+        momentum.zscore(mask=universe)
+        - 0.5 * vol.zscore(mask=universe)
+    )
+```
+
+Supported operators are `+`, `-`, `*`, `/`, and unary `-`. Either operand can be a `Factor` or a Python scalar. Division by zero leaves `inf` in place. For safe normalisation you reach for `zscore`, which already guards against zero dispersion.
+
+## Why opt-in
+
+The single most important property of the rollout is that a strategy that does not set `pipelines` pays **zero** cost. The engine is not constructed, no panel is built, and the existing per-symbol data flow is unchanged. You can adopt pipelines on a single strategy without touching the rest of your codebase, and you can run pipeline-using and non-pipeline-using strategies side by side in the same backtest.
+
+This was important to get right. Adding a heavy new code path that taxed every existing user would have been the wrong trade. The framework already runs hundreds of strategies that have nothing to do with cross-sectional factors, and they should not pay for a feature they don't use.
+
+## Phased rollout
+
+The work is split across three phases that map cleanly to where the engine actually runs:
+
+| Mode | Status | Tracking |
+| --- | --- | --- |
+| Event-driven backtest | ✅ Phase 1 | Initial release |
+| Vector backtest | ✅ Phase 2 | [#502](https://github.com/coding-kitties/investing-algorithm-framework/issues/502) |
+| Live trading | 🚧 Phase 3 | [#503](https://github.com/coding-kitties/investing-algorithm-framework/issues/503) |
+
+Phase 1, the event-driven backtest, is the largest piece by far. Once you have a panel, factor evaluation, and a mask layer that respects bar boundaries, the vector backtest in Phase 2 mostly reuses the same evaluator with a different driver loop. Phase 3 (live) is where I want to land it, but it touches the data subscription layer and deserves its own design pass. The same code paths just need to be invoked from the live event loop rather than the historical replay.
+
+## What this unlocks
+
+A few concrete things:
+
+- **Correctness.** The framework now owns the panel construction and the truncation. Look-ahead bugs around cross-sectional factors get fixed in one place instead of in every user's strategy.
+- **Expressiveness.** Ranking, filtering, and z-scoring across a basket goes from a hand-written loop with defensive null handling to three lines of declarative code.
+- **A place for future work.** Pipelines are now the natural home for cross-sectional features I want to add later (sector neutrality, beta neutralisation, factor risk models) without re-doing the data plumbing every time.
+
+## See also
+
+- Tracking issues: [#501 (Phase 1)](https://github.com/coding-kitties/investing-algorithm-framework/issues/501), [#502 (Phase 2)](https://github.com/coding-kitties/investing-algorithm-framework/issues/502), [#503 (Phase 3)](https://github.com/coding-kitties/investing-algorithm-framework/issues/503).
+- Design doc: [`docs/design/pipeline-api.md`](https://github.com/coding-kitties/investing-algorithm-framework/blob/dev/docs/design/pipeline-api.md).
+- Repository: [coding-kitties/investing-algorithm-framework](https://github.com/coding-kitties/investing-algorithm-framework).

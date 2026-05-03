@@ -16,7 +16,7 @@ export default function Image() {
     eyebrow: "Open Source · Investing Algorithm Framework",
     title: "A Stability Score for Bounded Trading Metrics",
     description:
-      "Why CV-based consistency breaks down for win rates and Sharpe ratios — and how a normalized-σ stability score gives you a more intuitive measure for bounded metrics.",
+      "Why CV-based consistency breaks down for win rates and Sharpe ratios, and how a normalized-σ stability score gives you a more intuitive measure for bounded metrics.",
     visual: <StabilityVisual />,
   });
 }

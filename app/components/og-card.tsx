@@ -316,3 +316,126 @@ export function StabilityVisual() {
     </div>
   );
 }
+
+export function PipelineVisual() {
+  type Row = {
+    symbol: string;
+    adv: string;
+    mom: string;
+    momColor: string;
+    alpha: string;
+    masked?: boolean;
+  };
+  const rows: Row[] = [
+    { symbol: "BTC/EUR", adv: "8.2e8", mom: "+0.142", momColor: "#00e676", alpha: "98" },
+    { symbol: "ETH/EUR", adv: "4.1e8", mom: "+0.087", momColor: "#00e676", alpha: "76" },
+    { symbol: "SOL/EUR", adv: "1.9e8", mom: "-0.034", momColor: "#ff7d7d", alpha: "42" },
+    { symbol: "ADA/EUR", adv: "9.4e7", mom: "+0.011", momColor: "#00e676", alpha: "31" },
+    { symbol: "DOT/EUR", adv: "—", mom: "—", momColor: "#555", alpha: "dropped", masked: true },
+  ];
+
+  const headerCellStyle: React.CSSProperties = {
+    color: "#18ffff",
+    fontSize: 14,
+    fontWeight: 700,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    padding: "10px 14px",
+    display: "flex",
+  };
+
+  const cellStyle: React.CSSProperties = {
+    fontSize: 16,
+    padding: "10px 14px",
+    display: "flex",
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: 500,
+        gap: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          fontSize: 14,
+          color: "#00e676",
+          fontWeight: 700,
+          letterSpacing: 2,
+          textTransform: "uppercase",
+        }}
+      >
+        data["MomentumScreener"]
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          background: "#111827",
+          border: "1.5px solid #18ffff",
+          borderRadius: 8,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            borderBottom: "1px solid #1e2a3a",
+            background: "rgba(24, 255, 255, 0.06)",
+          }}
+        >
+          <div style={{ ...headerCellStyle, width: 140 }}>symbol</div>
+          <div style={{ ...headerCellStyle, width: 110 }}>adv</div>
+          <div style={{ ...headerCellStyle, width: 130 }}>momentum</div>
+          <div style={{ ...headerCellStyle, width: 120 }}>alpha</div>
+        </div>
+
+        {rows.map((r) => (
+          <div
+            key={r.symbol}
+            style={{
+              display: "flex",
+              borderBottom: "1px solid #1e2a3a",
+              opacity: r.masked ? 0.35 : 1,
+            }}
+          >
+            <div style={{ ...cellStyle, width: 140, color: "#c9d1d9" }}>
+              {r.masked ? (
+                <span style={{ textDecoration: "line-through" }}>
+                  {r.symbol}
+                </span>
+              ) : (
+                r.symbol
+              )}
+            </div>
+            <div style={{ ...cellStyle, width: 110, color: "#a0a8b4" }}>
+              {r.adv}
+            </div>
+            <div style={{ ...cellStyle, width: 130, color: r.momColor }}>
+              {r.mom}
+            </div>
+            <div style={{ ...cellStyle, width: 120, color: "#ffd740", fontWeight: 700 }}>
+              {r.alpha}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          fontSize: 13,
+          color: "#6b7b8d",
+          marginTop: 4,
+        }}
+      >
+        universe = ADV.top(100) · alpha = momentum.rank(mask=universe)
+      </div>
+    </div>
+  );
+}

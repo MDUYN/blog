@@ -1,7 +1,7 @@
 export const metadata = {
   title: "Python Multiprocessing: Why Your Code Is Slow on Windows",
   description:
-    "Fork vs spawn, why it matters for Python parallelization, and how to fix it — with a real-world example from the Investing Algorithm Framework.",
+    "Fork vs spawn, why it matters for Python parallelization, and how to fix it, with a real-world example from the Investing Algorithm Framework.",
   alternates: {
     canonical: "/articles/parallel-backtest-windows",
   },
@@ -33,12 +33,12 @@ When Python's `multiprocessing` module creates a new process, it uses a _start m
 
 | Start method | Default on | How it works |
 |-------------|----------|-------------|
-| **fork** | macOS, Linux | Copies the parent process's memory space. The child inherits everything — all loaded data, open files, imported modules — via copy-on-write. |
+| **fork** | macOS, Linux | Copies the parent process's memory space. The child inherits everything (all loaded data, open files, imported modules) via copy-on-write. |
 | **spawn** | Windows, WSL | Starts a brand new Python interpreter from scratch. Everything the child needs must be serialized (pickled), sent over a pipe, and deserialized. |
 
-On fork-based systems, the child process gets a snapshot of the parent's memory for free. A worker that needs access to a 500 MB DataFrame already has it — it was inherited at fork time.
+On fork-based systems, the child process gets a snapshot of the parent's memory for free. A worker that needs access to a 500 MB DataFrame already has it, since it was inherited at fork time.
 
-On spawn-based systems, that same 500 MB DataFrame must be pickled, sent to the child process, and unpickled from scratch. And if you're not careful, this happens _every time you submit a task_ — not just once per worker.
+On spawn-based systems, that same 500 MB DataFrame must be pickled, sent to the child process, and unpickled from scratch. And if you're not careful, this happens _every time you submit a task_, not just once per worker.
 
 ## The naive approach: passing data per task
 
@@ -50,7 +50,7 @@ with ProcessPoolExecutor(max_workers=4) as executor:
         executor.submit(worker_fn, task, large_shared_data)
 ```
 
-On fork-based systems, `large_shared_data` is already in the worker's memory. Python still pickles the reference, but it's cheap — the actual data isn't copied.
+On fork-based systems, `large_shared_data` is already in the worker's memory. Python still pickles the reference, but it's cheap because the actual data isn't copied.
 
 On spawn-based systems, `large_shared_data` is pickled and sent to the worker **for every `submit()` call**. If you submit 100 tasks, that's 100 full serializations of your entire dataset. The I/O and CPU overhead from all this pickling can easily exceed the time saved by parallelizing.
 
@@ -59,7 +59,7 @@ On spawn-based systems, `large_shared_data` is pickled and sent to the worker **
 `ProcessPoolExecutor` has a built-in mechanism for this: the `initializer` parameter. It runs a function once when each worker process starts, before any tasks are submitted:
 
 ```python
-# Module-level global — set by each worker at startup
+# Module-level global, set by each worker at startup
 _shared_data = None
 
 def _init_worker(data):
@@ -81,13 +81,13 @@ with ProcessPoolExecutor(
         executor.submit(worker_fn, task)
 ```
 
-Now on spawn-based systems, the data is pickled **4 times** (once per worker) instead of **100 times** (once per task). On fork-based systems, nothing changes — the initializer still runs but it's cheap either way.
+Now on spawn-based systems, the data is pickled **4 times** (once per worker) instead of **100 times** (once per task). On fork-based systems, nothing changes. The initializer still runs but it's cheap either way.
 
-This is exactly what the `initializer` API was designed for. If you have large read-only state that all workers need, don't fight the serialization model — use the tool Python gives you.
+This is exactly what the `initializer` API was designed for. If you have large read-only state that all workers need, don't fight the serialization model. Use the tool Python gives you.
 
 ## Real-world example: Investing Algorithm Framework
 
-I ran into this exact problem in the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework). The framework supports running backtests in parallel — distributing strategy batches across multiple workers. Each worker needs access to a `data_provider_service` that holds all loaded market data (OHLCV DataFrames, order books, etc.).
+I ran into this exact problem in the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework). The framework supports running backtests in parallel by distributing strategy batches across multiple workers. Each worker needs access to a `data_provider_service` that holds all loaded market data (OHLCV DataFrames, order books, etc.).
 
 The original code passed the data provider as part of each task's arguments:
 
@@ -102,7 +102,7 @@ for batch in strategy_batches:
     ))
 ```
 
-On macOS this was fine. On Windows, running 50 strategy batches meant serializing the entire dataset 50 times. The fix was straightforward — move the data provider into the `initializer`:
+On macOS this was fine. On Windows, running 50 strategy batches meant serializing the entire dataset 50 times. The fix was straightforward: move the data provider into the `initializer`.
 
 ```python
 shared_data_provider = self._data_provider_service.copy()
@@ -112,7 +112,7 @@ with ProcessPoolExecutor(
     initializer=_init_worker,
     initargs=(shared_data_provider,),
 ) as ex:
-    # Tasks pass None for data_provider — worker reads the global
+    # Tasks pass None for data_provider; worker reads the global
     ...
 ```
 
@@ -130,7 +130,7 @@ The full change is in [PR #481](https://github.com/coding-kitties/investing-algo
 
 ## Progress tracking across workers
 
-Parallel progress tracking is another area where fork vs spawn matters. A common approach is wrapping `as_completed(futures)` with `tqdm` — but that only shows progress per _batch_, not per individual unit of work.
+Parallel progress tracking is another area where fork vs spawn matters. A common approach is wrapping `as_completed(futures)` with `tqdm`, but that only shows progress per _batch_, not per individual unit of work.
 
 The better approach is a shared counter using `multiprocessing.Manager`:
 
@@ -168,7 +168,7 @@ These are trivial to fix but easy to miss when your entire CI pipeline runs on L
 
 ## Summary
 
-- **fork** (macOS/Linux) gives workers free access to the parent's memory. **spawn** (Windows/WSL) starts fresh — everything must be pickled.
+- **fork** (macOS/Linux) gives workers free access to the parent's memory. **spawn** (Windows/WSL) starts fresh, so everything must be pickled.
 - Passing large data per `submit()` call is fine on fork, catastrophic on spawn.
 - Use `ProcessPoolExecutor`'s `initializer` to send large shared state once per worker.
 - Use `multiprocessing.Manager().Value()` for cross-process progress tracking that works everywhere.

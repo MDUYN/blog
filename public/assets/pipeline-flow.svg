@@ -1,0 +1,230 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" fill="none">
+  <style>
+    .box      { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1.5; rx: 6; }
+    .box-hl   { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-green, #00e676); stroke-width: 2; rx: 6; }
+    .box-cyan { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-cyan, #18ffff); stroke-width: 1.5; rx: 6; }
+    .box-amber { fill: var(--color-terminal-surface, #111827); stroke: var(--color-terminal-amber, #ffd740); stroke-width: 1.5; rx: 6; }
+
+    .label    { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; fill: var(--color-terminal-text, #c9d1d9); text-anchor: middle; dominant-baseline: central; }
+    .label-hl { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 14px; fill: var(--color-terminal-green, #00e676); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+    .label-cy { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; fill: var(--color-terminal-cyan, #18ffff); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+    .label-am { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; fill: var(--color-terminal-amber, #ffd740); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+    .label-sm { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: var(--color-terminal-text-dim, #6b7b8d); text-anchor: middle; dominant-baseline: central; }
+    .label-tag { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 9px; fill: var(--color-terminal-cyan, #18ffff); text-anchor: middle; dominant-baseline: central; letter-spacing: 1px; }
+    .label-code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: var(--color-terminal-text, #c9d1d9); dominant-baseline: central; }
+    .label-num { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 10px; fill: var(--color-terminal-green, #00e676); dominant-baseline: central; }
+
+    .arrow      { stroke: var(--color-terminal-border, #1e2a3a); stroke-width: 1.5; fill: none; marker-end: url(#arr); }
+    .arrow-hl   { stroke: var(--color-terminal-green, #00e676); stroke-width: 1.5; fill: none; marker-end: url(#arr-hl); }
+    .arrow-cyan { stroke: var(--color-terminal-cyan, #18ffff); stroke-width: 1.5; fill: none; marker-end: url(#arr-cyan); }
+    .arrow-amber { stroke: var(--color-terminal-amber, #ffd740); stroke-width: 1.5; fill: none; marker-end: url(#arr-amber); }
+
+    .dot       { fill: var(--color-terminal-green, #00e676); }
+    .dot-glow  { fill: var(--color-terminal-green, #00e676); opacity: 0.3; }
+    .dot-cy    { fill: var(--color-terminal-cyan, #18ffff); }
+    .dot-cy-glow { fill: var(--color-terminal-cyan, #18ffff); opacity: 0.3; }
+    .dot-am    { fill: var(--color-terminal-amber, #ffd740); }
+    .dot-am-glow { fill: var(--color-terminal-amber, #ffd740); opacity: 0.3; }
+
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 0.10; }
+    }
+    .panel-glow {
+      fill: var(--color-terminal-green, #00e676);
+      animation: glow-pulse 4s ease-in-out infinite;
+    }
+
+    /* Cycling factor tags */
+    @keyframes tag-cycle {
+      0%, 22% { opacity: 1; }
+      30%, 95% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    .tag-1 { animation: tag-cycle 8s ease-in-out infinite; }
+    .tag-2 { animation: tag-cycle 8s ease-in-out 2s infinite; }
+    .tag-3 { animation: tag-cycle 8s ease-in-out 4s infinite; }
+    .tag-4 { animation: tag-cycle 8s ease-in-out 6s infinite; }
+
+    /* Symbol tickers shimmer */
+    @keyframes sym-shimmer {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+    .sym { animation: sym-shimmer 2.4s ease-in-out infinite; }
+    .sym:nth-child(2) { animation-delay: 0.3s; }
+    .sym:nth-child(3) { animation-delay: 0.6s; }
+    .sym:nth-child(4) { animation-delay: 0.9s; }
+    .sym:nth-child(5) { animation-delay: 1.2s; }
+    .sym:nth-child(6) { animation-delay: 1.5s; }
+    .sym:nth-child(7) { animation-delay: 1.8s; }
+
+    /* Mask / drop pulse on excluded rows */
+    @keyframes mask-pulse {
+      0%, 50% { opacity: 0.25; }
+      55%, 100% { opacity: 0.06; }
+    }
+    .masked { animation: mask-pulse 4s ease-in-out infinite; }
+  </style>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="1.2"/>
+    </marker>
+    <marker id="arr-hl" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-green, #00e676)" stroke-width="1.2"/>
+    </marker>
+    <marker id="arr-cyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-cyan, #18ffff)" stroke-width="1.2"/>
+    </marker>
+    <marker id="arr-amber" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--color-terminal-amber, #ffd740)" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <!-- ═══ ROW 1: Many OHLCV symbols ═══ -->
+  <text class="label-tag" x="380" y="22">EVERY ITERATION · t = current bar</text>
+
+  <g>
+    <rect class="box sym" x="50" y="40" width="86" height="28"/>
+    <text class="label" x="93" y="54">BTC/EUR</text>
+    <rect class="box sym" x="146" y="40" width="86" height="28"/>
+    <text class="label" x="189" y="54">ETH/EUR</text>
+    <rect class="box sym" x="242" y="40" width="86" height="28"/>
+    <text class="label" x="285" y="54">SOL/EUR</text>
+    <rect class="box sym" x="338" y="40" width="86" height="28"/>
+    <text class="label" x="381" y="54">ADA/EUR</text>
+    <rect class="box sym" x="434" y="40" width="86" height="28"/>
+    <text class="label" x="477" y="54">DOT/EUR</text>
+    <rect class="box sym" x="530" y="40" width="86" height="28"/>
+    <text class="label" x="573" y="54">AVAX/EUR</text>
+    <rect class="box sym" x="626" y="40" width="86" height="28"/>
+    <text class="label" x="669" y="54">…N more</text>
+  </g>
+
+  <text class="label-sm" x="380" y="84">OHLCV per symbol</text>
+
+  <!-- Funnel arrows from symbols to panel -->
+  <line class="arrow-hl" x1="93"  y1="68" x2="320" y2="116"/>
+  <line class="arrow-hl" x1="189" y1="68" x2="340" y2="116"/>
+  <line class="arrow-hl" x1="285" y1="68" x2="370" y2="116"/>
+  <line class="arrow-hl" x1="381" y1="68" x2="395" y2="116"/>
+  <line class="arrow-hl" x1="477" y1="68" x2="420" y2="116"/>
+  <line class="arrow-hl" x1="573" y1="68" x2="450" y2="116"/>
+  <line class="arrow-hl" x1="669" y1="68" x2="470" y2="116"/>
+
+  <!-- ═══ ROW 2: Long-form panel ═══ -->
+  <rect class="box-hl" x="240" y="116" width="280" height="62"/>
+  <text class="label-hl" x="380" y="136">long-form panel</text>
+  <text class="label-sm" x="380" y="158">(datetime, symbol, o, h, l, c, v) · no look-ahead</text>
+
+  <!-- Animated dot: panel → factors -->
+  <line class="arrow-hl" x1="380" y1="178" x2="380" y2="216"/>
+  <circle class="dot-glow" r="7">
+    <animateMotion dur="5s" repeatCount="indefinite">
+      <mpath href="#p1"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot" r="3.5">
+    <animateMotion dur="5s" repeatCount="indefinite">
+      <mpath href="#p1"/>
+    </animateMotion>
+  </circle>
+  <path id="p1" d="M380,178 L380,216" fill="none" stroke="none"/>
+
+  <!-- ═══ ROW 3: Factor evaluation (vectorised Polars) ═══ -->
+  <rect class="panel-glow" x="120" y="216" width="520" height="84" rx="8"/>
+  <rect class="box-hl" x="125" y="220" width="510" height="76"/>
+  <text class="label-hl" x="380" y="240">Factor evaluation · vectorised Polars</text>
+
+  <!-- Cycling factor identifiers -->
+  <text class="label-tag tag-1" x="380" y="262">Returns(30) · AverageDollarVolume(30)</text>
+  <text class="label-tag tag-2" x="380" y="262">SMA(50) · RSI(14) · Volatility(30)</text>
+  <text class="label-tag tag-3" x="380" y="262">momentum.zscore(mask=universe)</text>
+  <text class="label-tag tag-4" x="380" y="262">CustomFactor · cached sub-expressions</text>
+
+  <text class="label-sm" x="380" y="282">one pass · per-evaluation cache · no per-symbol loops</text>
+
+  <!-- Arrow: factors → mask -->
+  <line class="arrow-hl" x1="380" y1="300" x2="380" y2="338"/>
+  <circle class="dot-glow" r="7">
+    <animateMotion dur="5s" repeatCount="indefinite" begin="0.6s">
+      <mpath href="#p2"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot" r="3.5">
+    <animateMotion dur="5s" repeatCount="indefinite" begin="0.6s">
+      <mpath href="#p2"/>
+    </animateMotion>
+  </circle>
+  <path id="p2" d="M380,300 L380,338" fill="none" stroke="none"/>
+
+  <!-- ═══ ROW 4: Universe mask ═══ -->
+  <rect class="box-amber" x="225" y="338" width="310" height="50"/>
+  <text class="label-am" x="380" y="356">universe = ADV.top(N)</text>
+  <text class="label-sm" x="380" y="376">boolean mask · drops symbols below cutoff</text>
+
+  <!-- Arrow: mask → output -->
+  <line class="arrow-amber" x1="380" y1="388" x2="380" y2="420"/>
+  <circle class="dot-am-glow" r="7">
+    <animateMotion dur="5s" repeatCount="indefinite" begin="1.2s">
+      <mpath href="#p3"/>
+    </animateMotion>
+  </circle>
+  <circle class="dot-am" r="3.5">
+    <animateMotion dur="5s" repeatCount="indefinite" begin="1.2s">
+      <mpath href="#p3"/>
+    </animateMotion>
+  </circle>
+  <path id="p3" d="M380,388 L380,420" fill="none" stroke="none"/>
+
+  <!-- ═══ ROW 5: Wide DataFrame output ═══ -->
+  <rect class="box-cyan" x="120" y="420" width="520" height="120"/>
+  <text class="label-cy" x="380" y="438">data["MomentumScreener"] · wide DataFrame</text>
+
+  <!-- Header -->
+  <line x1="140" y1="450" x2="620" y2="450" stroke="var(--color-terminal-cyan, #18ffff)" stroke-width="0.8" opacity="0.6"/>
+  <text class="label-code" x="160" y="464" fill="var(--color-terminal-cyan, #18ffff)">symbol</text>
+  <text class="label-code" x="290" y="464" fill="var(--color-terminal-cyan, #18ffff)">dollar_volume</text>
+  <text class="label-code" x="430" y="464" fill="var(--color-terminal-cyan, #18ffff)">momentum</text>
+  <text class="label-code" x="540" y="464" fill="var(--color-terminal-cyan, #18ffff)">alpha</text>
+
+  <line x1="140" y1="472" x2="620" y2="472" stroke="var(--color-terminal-border, #1e2a3a)" stroke-width="0.8"/>
+
+  <!-- Surviving rows -->
+  <text class="label-code" x="160" y="486">BTC/EUR</text>
+  <text class="label-num" x="290" y="486">8.2e8</text>
+  <text class="label-num" x="430" y="486">+0.142</text>
+  <text class="label-num" x="540" y="486">98</text>
+
+  <text class="label-code" x="160" y="502">ETH/EUR</text>
+  <text class="label-num" x="290" y="502">4.1e8</text>
+  <text class="label-num" x="430" y="502">+0.087</text>
+  <text class="label-num" x="540" y="502">76</text>
+
+  <text class="label-code" x="160" y="518">SOL/EUR</text>
+  <text class="label-num" x="290" y="518">1.9e8</text>
+  <text class="label-num" x="430" y="518">-0.034</text>
+  <text class="label-num" x="540" y="518">42</text>
+
+  <!-- Masked-out row (faded, animated) -->
+  <g class="masked">
+    <text class="label-code" x="160" y="534" opacity="0.6" text-decoration="line-through">DOT/EUR</text>
+    <text class="label-code" x="290" y="534" opacity="0.6">—</text>
+    <text class="label-code" x="430" y="534" opacity="0.6">—</text>
+    <text class="label-code" x="540" y="534" opacity="0.6">dropped</text>
+  </g>
+
+  <!-- Side annotations -->
+  <text class="label-sm" x="50" y="248" text-anchor="start" opacity="0.7">+ - * /</text>
+  <text class="label-sm" x="50" y="262" text-anchor="start" opacity="0.7">.rank()</text>
+  <text class="label-sm" x="50" y="276" text-anchor="start" opacity="0.7">.zscore()</text>
+
+  <text class="label-sm" x="650" y="248" text-anchor="start" opacity="0.7">cached</text>
+  <text class="label-sm" x="650" y="262" text-anchor="start" opacity="0.7">no loops</text>
+  <text class="label-sm" x="650" y="276" text-anchor="start" opacity="0.7">vector ops</text>
+
+  <text class="label-sm" x="650" y="356" text-anchor="start" opacity="0.7" fill="var(--color-terminal-amber, #ffd740)">.top(N)</text>
+  <text class="label-sm" x="650" y="370" text-anchor="start" opacity="0.7" fill="var(--color-terminal-amber, #ffd740)">.bottom(N)</text>
+
+</svg>

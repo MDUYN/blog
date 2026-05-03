@@ -25,11 +25,11 @@ import FinterionCard from "../../components/FinterionCard";
 
 One thing that always bothered me about the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) was the workflow friction. You'd write a strategy in a `.py` file, switch to a terminal, run a backtest command, and then switch to a browser to view the report. If you wanted to tweak a parameter, you'd repeat the whole cycle.
 
-Jupyter notebooks are the natural home for this kind of iterative work — especially in quant finance. So I [added IPython magic commands](https://github.com/coding-kitties/investing-algorithm-framework/pull/481) that let you define, run, and analyze backtests without ever leaving the notebook.
+Jupyter notebooks are the natural home for this kind of iterative work, especially in quant finance. So I [added IPython magic commands](https://github.com/coding-kitties/investing-algorithm-framework/pull/481) that let you define, run, and analyze backtests without ever leaving the notebook.
 
 ## The problem
 
-The framework already had a solid CLI and Python API for running backtests. But notebooks are where most quant researchers actually spend their time: exploring data, testing hypotheses, and iterating fast.
+The framework already had a solid CLI and Python API for running backtests. But notebooks are where most quant researchers actually spend their time, exploring data, testing hypotheses, and iterating fast.
 
 The gap was clear:
 
@@ -42,9 +42,9 @@ The goal was to collapse the entire backtest loop into a single notebook cell.
 
 ## How it works
 
-The integration provides two IPython magic commands:
+The integration provides two IPython magic commands.
 
-### Cell magic — `%%backtest`
+### Cell magic: `%%backtest`
 
 Define a strategy and run a backtest inline in a single cell:
 
@@ -68,9 +68,9 @@ class MyStrategy(TradingStrategy):
         ...
 ```
 
-The `%%backtest` magic parses the cell body, discovers any `TradingStrategy` subclass, wires up the app, and runs the backtest — all in one execution.
+The `%%backtest` magic parses the cell body, discovers any `TradingStrategy` subclass, wires up the app, and runs the backtest, all in one execution.
 
-### Line magic — `%backtest`
+### Line magic: `%backtest`
 
 If you already have a strategy file on disk, point to it directly:
 
@@ -99,22 +99,22 @@ Both magic commands accept the same set of flags:
 | `--snapshot-interval` | `DAILY` or `TRADE_CLOSE` |
 | `--no-fill-missing-data` | Skip filling missing data gaps |
 
-The `-o` flag is especially useful — it stores the backtest result object in the notebook's namespace so you can inspect metrics, plot equity curves, or feed it into further analysis in the next cell.
+The `-o` flag is especially useful. It stores the backtest result object in the notebook's namespace so you can inspect metrics, plot equity curves, or feed it into further analysis in the next cell.
 
 ## Two backtesting modes
 
 The magic supports both execution models the framework provides:
 
-- **Event-driven** (default): Calls `app.run_backtest()` — the strategy's `run_strategy` method is invoked at each time step, simulating real-time execution.
-- **Vectorized** (`--vectorized`): Calls `app.run_vector_backtest()` — uses `generate_buy_signals` / `generate_sell_signals` for faster, array-based backtesting.
+- **Event-driven** (default). Calls `app.run_backtest()`. The strategy's `run_strategy` method is invoked at each time step, simulating real-time execution.
+- **Vectorized** (`--vectorized`). Calls `app.run_vector_backtest()` and uses `generate_buy_signals` / `generate_sell_signals` for faster, array-based backtesting.
 
-You pick the mode based on what you're testing. Vectorized is faster for signal-based strategies; event-driven is more realistic for strategies with complex state management.
+You pick the mode based on what you're testing. Vectorized is faster for signal-based strategies. Event-driven is more realistic for strategies with complex state management.
 
 ## Implementation details
 
-The core implementation lives in two files:
+The core implementation lives in two files.
 
-**`investing_algorithm_framework/notebook/magic.py`** contains the `BacktestMagics` class that registers both `%%backtest` and `%backtest` with IPython. The key challenge was strategy discovery — the cell magic needs to execute the cell code, then scan the resulting namespace for `TradingStrategy` subclasses while filtering out the base class itself.
+**`investing_algorithm_framework/notebook/magic.py`** contains the `BacktestMagics` class that registers both `%%backtest` and `%backtest` with IPython. The key challenge was strategy discovery: the cell magic needs to execute the cell code, then scan the resulting namespace for `TradingStrategy` subclasses while filtering out the base class itself.
 
 **`investing_algorithm_framework/__init__.py`** exposes a top-level `load_ipython_extension` function so that `%load_ext investing_algorithm_framework` works without users needing to know the internal module path.
 
@@ -124,19 +124,19 @@ The argument parser handles date formats with and without hours (`YYYY-MM-DD` an
 
 The PR includes 15 unit tests covering:
 
-- **Date parsing** — valid formats, invalid input, hour rounding
-- **Argument parser** — minimal args, full args, strategy path, risk-free rate, no-fill flag
-- **Strategy discovery** — finding subclasses, handling multiple strategies, filtering the base class, skipping non-class objects
-- **Extension registration** — verifying magic registration and the top-level `load_ext` hook
+- **Date parsing**: valid formats, invalid input, hour rounding
+- **Argument parser**: minimal args, full args, strategy path, risk-free rate, no-fill flag
+- **Strategy discovery**: finding subclasses, handling multiple strategies, filtering the base class, skipping non-class objects
+- **Extension registration**: verifying magic registration and the top-level `load_ext` hook
 
-All tests run without a live IPython kernel — they test the parsing and discovery logic directly, which keeps the test suite fast and CI-friendly.
+All tests run without a live IPython kernel. They test the parsing and discovery logic directly, which keeps the test suite fast and CI-friendly.
 
 ## What's next
 
 This is a first step toward making notebooks a first-class environment for the framework. Future work could include:
 
-- **Rich output** — rendering equity curves and trade tables directly as notebook widgets
-- **Parameter sweeps** — a `%%sweep` magic that runs the same strategy across parameter grids
-- **Live monitoring** — streaming portfolio state into notebook cells during paper trading
+- **Rich output**: rendering equity curves and trade tables directly as notebook widgets
+- **Parameter sweeps**: a `%%sweep` magic that runs the same strategy across parameter grids
+- **Live monitoring**: streaming portfolio state into notebook cells during paper trading
 
 The full PR is at [#481](https://github.com/coding-kitties/investing-algorithm-framework/pull/481).

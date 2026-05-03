@@ -47,7 +47,7 @@ export default function WorkingOnPage() {
             />
           </div>
           <p className="text-[var(--color-terminal-text)] leading-relaxed">
-            Building an open source quantitative trading platform — democratizing
+            Building an open source quantitative trading platform that democratizes
             algorithmic strategies by connecting quant developers with investors.
             Providing the tools and infrastructure to build, test, and deploy
             trading strategies.
@@ -88,7 +88,7 @@ export default function WorkingOnPage() {
             </h3>
           </div>
           <p className="text-[var(--color-terminal-text)] leading-relaxed">
-            Software Engineer at Microsoft — working on large-scale software
+            Software Engineer at Microsoft, working on large-scale software
             systems, cloud infrastructure, and agentic applications with a focus
             on multi-agent orchestration.
           </p>
@@ -128,7 +128,7 @@ export default function WorkingOnPage() {
               Investing Algorithm Framework
             </h4>
             <p className="text-sm text-[var(--color-terminal-text)] leading-relaxed">
-              An open source framework for building investing algorithms —
+              An open source framework for building investing algorithms,
               from data ingestion and strategy development to backtesting and
               execution.
             </p>
@@ -160,7 +160,7 @@ export default function WorkingOnPage() {
               PyIndicators
             </h4>
             <p className="text-sm text-[var(--color-terminal-text)] leading-relaxed">
-              A Python library for calculating technical indicators — fast,
+              A Python library for calculating technical indicators. Fast,
               reliable, and easy to integrate into trading pipelines and data
               analysis workflows.
             </p>

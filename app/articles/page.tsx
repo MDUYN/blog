@@ -13,6 +13,19 @@ type Article = {
 
 const articles: Article[] = [
   {
+    title: "Pipelines: Cross-Sectional Factor Computation in One Shot",
+    description:
+      "How I added a Pipeline API to the Investing Algorithm Framework so strategies can rank, mask, and z-score factors across many symbols every iteration, with no per-symbol loops and no look-ahead.",
+    href: "/articles/pipelines",
+    date: "May 2026",
+    tags: [
+      "open-source",
+      "investing-algorithm-framework",
+      "quantitative-trading",
+      "software-engineering",
+    ],
+  },
+  {
     title: "Measuring Strategy Consistency Across Walk-Forward Windows",
     description:
       "How I added a CV-based consistency score to the Investing Algorithm Framework so you can tell the difference between a strategy that's reliably profitable and one that got lucky in a single window.",
@@ -28,7 +41,7 @@ const articles: Article[] = [
   {
     title: "A Stability Score for Bounded Trading Metrics",
     description:
-      "Why CV-based consistency breaks down for win rates and Sharpe ratios — and how a normalized-std stability score gives you a more intuitive measure for bounded metrics.",
+      "Why CV-based consistency breaks down for win rates and Sharpe ratios, and how a normalized-std stability score gives you a more intuitive measure for bounded metrics.",
     href: "/articles/stability-score",
     date: "April 2026",
     tags: [
@@ -41,7 +54,7 @@ const articles: Article[] = [
   {
     title: "Python Multiprocessing: Why Your Code Is Slow on Windows",
     description:
-      "Fork vs spawn, why it matters for Python parallelization, and how to fix it — with a real-world example from the Investing Algorithm Framework.",
+      "Fork vs spawn, why it matters for Python parallelization, and how to fix it, with a real-world example from the Investing Algorithm Framework.",
     href: "/articles/parallel-backtest-windows",
     date: "April 2026",
     tags: [
@@ -78,7 +91,7 @@ const articles: Article[] = [
     ],
   },
   {
-    title: "Redesigning the Backtest Report — A Self-Contained HTML Dashboard",
+    title: "Redesigning the Backtest Report: A Self-Contained HTML Dashboard",
     description:
       "How I replaced Plotly and Jinja2 with a zero-dependency HTML dashboard for single and multi-strategy backtest analysis.",
     href: "/articles/backtest-report",
@@ -106,7 +119,7 @@ const articles: Article[] = [
   {
     title: "Why I Started Finterion",
     description:
-      "The story behind Finterion — why I'm building an open marketplace to democratize algorithmic trading.",
+      "The story behind Finterion and why I'm building an open marketplace to democratize algorithmic trading.",
     href: "/articles/why-i-started-finterion",
     date: "January 2022",
     tags: [
@@ -145,7 +158,7 @@ const articles: Article[] = [
     title:
       "Loading External Data from Any URL During Strategy Execution",
     description:
-      "How I added CSV, JSON, and Parquet URL data providers to the Investing Algorithm Framework — with caching, refresh intervals, and cloud deployment support.",
+      "How I added CSV, JSON, and Parquet URL data providers to the Investing Algorithm Framework, with caching, refresh intervals, and cloud deployment support.",
     href: "/articles/external-data-providers",
     date: "April 2026",
     tags: [

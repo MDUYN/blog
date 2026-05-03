@@ -30,7 +30,7 @@ export const metadata: Metadata = {
         url: "/blog/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Marc van Duyn — Software Engineer, Quantitative Trading, Open Source",
+        alt: "Marc van Duyn: Software Engineer, Quantitative Trading, Open Source",
       },
     ],
   },

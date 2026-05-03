@@ -1,7 +1,7 @@
 export const metadata = {
   title: "Loading External Data from Any URL During Strategy Execution",
   description:
-    "How I added CSV, JSON, and Parquet URL data providers to the Investing Algorithm Framework — with caching, refresh intervals, and cloud deployment support.",
+    "How I added CSV, JSON, and Parquet URL data providers to the Investing Algorithm Framework, with caching, refresh intervals, and cloud deployment support.",
   alternates: {
     canonical: "/articles/external-data-providers",
   },
@@ -26,7 +26,7 @@ import Img from "../../components/Img";
 
 Most trading strategies don't run on price data alone. You might use sentiment scores from an NLP pipeline, earnings dates from an API, macro indicators from a government data portal, or feature vectors from a machine learning model. The problem is getting that data _into_ your strategy without writing boilerplate data providers every time.
 
-I just shipped [external data providers](https://github.com/coding-kitties/investing-algorithm-framework/pull/472) for the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework). You can now fetch CSV, JSON, or Parquet data from any URL — with caching, refresh intervals, date parsing, and pre/post-processing — in a single function call.
+I just shipped [external data providers](https://github.com/coding-kitties/investing-algorithm-framework/pull/472) for the [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework). You can now fetch CSV, JSON, or Parquet data from any URL, with caching, refresh intervals, date parsing, and pre/post-processing, in a single function call.
 
 ## The problem
 
@@ -73,7 +73,7 @@ class SentimentStrategy(TradingStrategy):
             context.create_limit_order(...)
 ```
 
-Same pattern for JSON and Parquet — just swap `from_csv` with `from_json` or `from_parquet`. JSON accepts both arrays of objects and objects of arrays. Parquet is binary, so `pre_process` callbacks aren't supported for it (use `post_process` instead).
+Same pattern for JSON and Parquet. Just swap `from_csv` with `from_json` or `from_parquet`. JSON accepts both arrays of objects and objects of arrays. Parquet is binary, so `pre_process` callbacks aren't supported for it (use `post_process` instead).
 
 ### On-demand: context methods
 
@@ -103,22 +103,22 @@ Both approaches produce the same output: a Polars DataFrame, cached the same way
 
 ## The architecture
 
-Under the hood, all three formats share a single base class — `BaseURLDataProvider` — that handles the common logic. The format-specific subclasses (`CSVURLDataProvider`, `JSONURLDataProvider`, `ParquetURLDataProvider`) only implement four methods:
+Under the hood, all three formats share a single base class, `BaseURLDataProvider`, that handles the common logic. The format-specific subclasses (`CSVURLDataProvider`, `JSONURLDataProvider`, `ParquetURLDataProvider`) only implement four methods:
 
-- `_parse_raw_data(raw_bytes)` — parse the downloaded bytes into a DataFrame
-- `_read_cache_file(path)` — read from disk cache
-- `_write_cache_file(df, path)` — write to disk cache
-- `_cache_file_suffix()` — return `.csv`, `.json`, or `.parquet`
+- `_parse_raw_data(raw_bytes)` parses the downloaded bytes into a DataFrame
+- `_read_cache_file(path)` reads from disk cache
+- `_write_cache_file(df, path)` writes to disk cache
+- `_cache_file_suffix()` returns `.csv`, `.json`, or `.parquet`
 
-Everything else — URL fetching, caching logic, date parsing, pre/post-processing, backtest integration — lives in the base class. Adding a new format (YAML, Excel, whatever) would mean ~30 lines of code.
+Everything else (URL fetching, caching logic, date parsing, pre/post-processing, backtest integration) lives in the base class. Adding a new format (YAML, Excel, whatever) would mean ~30 lines of code.
 
 ## Caching
 
-Caching works at two levels:
+Caching works at two levels.
 
-**In-memory** — once fetched, the DataFrame stays in memory for the lifetime of the process. Subsequent calls to `get_data()` return the cached object without re-parsing.
+**In-memory.** Once fetched, the DataFrame stays in memory for the lifetime of the process. Subsequent calls to `get_data()` return the cached object without re-parsing.
 
-**On disk** — fetched data is written to `resources/data/` using an MD5 hash of the URL as the filename. No collisions, no naming conflicts. If the file exists and hasn't expired, the provider reads from disk instead of hitting the network.
+**On disk.** Fetched data is written to `resources/data/` using an MD5 hash of the URL as the filename. No collisions, no naming conflicts. If the file exists and hasn't expired, the provider reads from disk instead of hitting the network.
 
 The `refresh_interval` parameter controls staleness. It compares the cache file's modification time against the current time:
 
@@ -171,12 +171,12 @@ DataSource.from_csv(
 
 ## Cloud deployments
 
-The cache path was a subtle but important design decision. Cache files live inside `resources/data/` — the same directory that the framework's state handlers already sync. If you're deploying to AWS Lambda or Azure Functions with `AWSS3StorageStateHandler` or `AzureBlobStorageStateHandler`, the flow is:
+The cache path was a subtle but important design decision. Cache files live inside `resources/data/`, the same directory that the framework's state handlers already sync. If you're deploying to AWS Lambda or Azure Functions with `AWSS3StorageStateHandler` or `AzureBlobStorageStateHandler`, the flow is:
 
-1. **Load state** — cache files are restored from S3 / Azure Blob to `resources/data/`
-2. **Check interval** — file modification time is compared against `refresh_interval`
-3. **Skip or re-fetch** — only hits the URL if the interval has elapsed
-4. **Save state** — updated cache files are synced back to cloud storage
+1. **Load state.** Cache files are restored from S3 / Azure Blob to `resources/data/`.
+2. **Check interval.** File modification time is compared against `refresh_interval`.
+3. **Skip or re-fetch.** Only hits the URL if the interval has elapsed.
+4. **Save state.** Updated cache files are synced back to cloud storage.
 
 This means `refresh_interval` works correctly across cold starts. No extra configuration needed.
 
@@ -197,16 +197,16 @@ data_sources = [
 ]
 ```
 
-During backtesting, `data["macro"]` will only contain rows where `date <= current_backtest_date`. This gives you realistic point-in-time data — no lookahead bias from future rows leaking into your strategy.
+During backtesting, `data["macro"]` will only contain rows where `date <= current_backtest_date`. This gives you realistic point-in-time data and no lookahead bias from future rows leaking into your strategy.
 
 ## What this unlocks
 
-This was 1,849 additions across 16 files — including 43 tests covering all three providers. The key capabilities it adds:
+This was 1,849 additions across 16 files, including 43 tests covering all three providers. The key capabilities it adds:
 
-- **Alternative data** — sentiment scores, news feeds, social signals
-- **Economic indicators** — inflation, interest rates, GDP from government APIs
-- **Earnings data** — quarterly reports, revenue estimates from financial data providers
-- **ML features** — pre-computed feature vectors from your model pipeline
-- **Cross-asset signals** — data from other markets or asset classes
+- **Alternative data**: sentiment scores, news feeds, social signals
+- **Economic indicators**: inflation, interest rates, GDP from government APIs
+- **Earnings data**: quarterly reports, revenue estimates from financial data providers
+- **ML features**: pre-computed feature vectors from your model pipeline
+- **Cross-asset signals**: data from other markets or asset classes
 
 All without writing a single custom `DataProvider` class. The [PR](https://github.com/coding-kitties/investing-algorithm-framework/pull/472) is merged and available now.

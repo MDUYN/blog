@@ -12,6 +12,7 @@ const articleSlugs = [
   "learning-from-quantopian",
   "notebook-magic",
   "parallel-backtest-windows",
+  "pipelines",
   "stability-score",
   "why-i-started-finterion",
 ];

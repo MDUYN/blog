@@ -23,7 +23,7 @@ const experience: TimelineEntry[] = [
     logo: "/assets/microsoft.png",
     highlights: [
       "Software engineer within ISE (Industry Solutions Engineering) for financial service industries (FSI), contributing to greenfield projects on Microsoft Azure.",
-      "Built solutions with large language models (GPT-3.5, GPT-4) — RAG patterns, data querying, and completion flows.",
+      "Built solutions with large language models (GPT-3.5, GPT-4): RAG patterns, data querying, and completion flows.",
       "Implemented performance tests to validate scalability requirements.",
       "Led engineering efforts in infrastructure as code, CI/CD, and code maintainability through Azure and GitHub.",
       "Designed architecture proposals, validated design hypotheses, and ensured security and compliance requirements.",
@@ -57,7 +57,7 @@ const experience: TimelineEntry[] = [
     location: "Amsterdam",
     logo: "/assets/finterion-dark.png",
     highlights: [
-      "Founded Finterion as a student — now lead all engineering efforts for the platform.",
+      "Founded Finterion as a student, and now lead all engineering efforts for the platform.",
       "Architected a distributed network for investing algorithms and investor portfolios.",
       "Built an order scaling engine combining multiple algorithms to sync asset portfolios of various sizes.",
       "Created responsive web applications powered by a microservices architecture.",
@@ -72,7 +72,7 @@ const experience: TimelineEntry[] = [
     period: "Jan 2019 – Present",
     location: "Remote",
     highlights: [
-      "Active contributor and maintainer of open source projects — primarily the Investing Algorithm Framework.",
+      "Active contributor and maintainer of open source projects, primarily the Investing Algorithm Framework.",
       "Framework has 900+ GitHub stars and is used by developers worldwide for algorithmic trading.",
     ],
     tech: ["Python", "Open Source"],
@@ -97,7 +97,7 @@ const experience: TimelineEntry[] = [
     location: "Netherlands",
     logo: "/assets/tno.png",
     highlights: [
-      "Wrote master thesis: \"Consent Management in Data Spaces — A Reference Architecture for Consent Management in Data Spaces\".",
+      "Wrote master thesis: \"Consent Management in Data Spaces: A Reference Architecture for Consent Management in Data Spaces\".",
     ],
     tech: ["Research", "Architecture"],
   },
@@ -109,7 +109,7 @@ const experience: TimelineEntry[] = [
     location: "Delft",
     logo: "/assets/ubiops.png",
     highlights: [
-      "Built predictive maintenance software — real-time condition monitoring and predictive models for asset owners.",
+      "Built predictive maintenance software: real-time condition monitoring and predictive models for asset owners.",
     ],
     tech: ["Python", "Django"],
   },
@@ -300,7 +300,7 @@ export default function CVPage() {
         </p>
         <p className="text-sm text-[var(--color-terminal-text-dim)] mt-3 leading-relaxed">
           Software engineer at Microsoft and founder of Finterion. Building at the
-          intersection of engineering and financial markets — from cloud infrastructure
+          intersection of engineering and financial markets, from cloud infrastructure
           and AI to quantitative trading systems and open source frameworks.
         </p>
         <div className="mt-4 flex flex-wrap gap-3 font-mono text-xs">
@@ -418,7 +418,7 @@ export default function CVPage() {
               investing-algorithm-framework
             </p>
             <p className="text-xs text-[var(--color-terminal-text-dim)] mt-1">
-              Open source framework for building investing algorithms — data
+              Open source framework for building investing algorithms with data
               ingestion, strategy development, backtesting, and execution.
             </p>
             <p className="font-mono text-[10px] text-[var(--color-terminal-cyan)] mt-2">
@@ -436,7 +436,7 @@ export default function CVPage() {
             </p>
             <p className="text-xs text-[var(--color-terminal-text-dim)] mt-1">
               An open marketplace for investing algorithms and trading
-              strategies — connecting developers and investors.
+              strategies, connecting developers and investors.
             </p>
             <p className="font-mono text-[10px] text-[var(--color-terminal-cyan)] mt-2">
               Platform · finterion.com
@@ -452,7 +452,7 @@ export default function CVPage() {
               PyIndicators
             </p>
             <p className="text-xs text-[var(--color-terminal-text-dim)] mt-1">
-              Python library for calculating technical indicators — fast,
+              Python library for calculating technical indicators. Fast,
               reliable, and designed for trading pipelines.
             </p>
             <p className="font-mono text-[10px] text-[var(--color-terminal-cyan)] mt-2">
