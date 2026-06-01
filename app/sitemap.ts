@@ -3,6 +3,7 @@ const SITE_URL = "https://mduyn.github.io/blog";
 export const dynamic = "force-static";
 
 const articleSlugs = [
+  "backtest-bundle-format",
   "backtest-report",
   "blotter-system",
   "consistency-score",

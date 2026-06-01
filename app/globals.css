@@ -239,3 +239,89 @@ html.light .logo-dark {
 html.light .logo-light {
   display: block;
 }
+
+/* ── Print styles (CV → PDF) ── */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  /* Hide non-essential chrome when printing */
+  .no-print,
+  nav,
+  header,
+  footer {
+    display: none !important;
+  }
+
+  /* Force light, readable colors regardless of theme */
+  .print-cv {
+    color: #111111 !important;
+  }
+
+  .print-cv * {
+    color: inherit !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-cv a {
+    color: #0a4fa3 !important;
+    text-decoration: underline;
+  }
+
+  .print-cv .border,
+  .print-cv [class*="border-"] {
+    border-color: #cccccc !important;
+  }
+
+  /* Tweak spacing so it fits cleanly on the page */
+  .print-cv {
+    margin-top: 0 !important;
+  }
+
+  .print-cv h1 {
+    font-size: 22pt;
+  }
+  .print-cv h2 {
+    font-size: 12pt;
+    margin-top: 14pt;
+  }
+  .print-cv h3 {
+    font-size: 11pt;
+  }
+  .print-cv p,
+  .print-cv li,
+  .print-cv span {
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
+
+  /* Avoid splitting cards across pages */
+  .print-cv .timeline-card,
+  .print-cv .avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hide animated cursor when printing */
+  .print-cv .animate-pulse {
+    display: none !important;
+  }
+
+  /* Force IntersectionObserver-gated items to be visible in print */
+  .print-cv .timeline-card {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+

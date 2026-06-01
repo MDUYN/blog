@@ -1,0 +1,193 @@
+export const metadata = {
+  title: "A Single-Bundle Binary Format for Backtest Persistence",
+  description:
+    "How I replaced a 27-files-per-backtest directory layout with a single zstd + MessagePack bundle (.iafbt). 21x smaller, 3.6x faster to save, language-portable, and versioned.",
+  alternates: {
+    canonical: "/articles/backtest-bundle-format",
+  },
+};
+
+import FinterionCard from "../../components/FinterionCard";
+
+<FinterionCard />
+
+<div className="mt-12">
+<div className="font-mono text-xs text-[var(--color-terminal-text-dim)] uppercase tracking-widest mb-1">
+  Open Source · Software Engineering
+</div>
+
+# A Single-Bundle Binary Format for Backtest Persistence
+
+<div className="text-sm text-[var(--color-terminal-text-dim)] mt-2 mb-8">
+  May 2026
+</div>
+</div>
+
+The [Investing Algorithm Framework](https://github.com/coding-kitties/investing-algorithm-framework) used to write each backtest result as a directory of 27 small JSON, parquet, and metadata files. That worked fine for a handful of runs. It fell over the moment I started doing serious parameter sweeps. 1,000 backtests meant 27,000 files and 16 GB of disk for results that were 95% redundant whitespace and repeated key names.
+
+I [replaced the whole layout](https://github.com/coding-kitties/investing-algorithm-framework/pull/516) with a single binary bundle: zstd-compressed MessagePack with a magic header and version, written one file per backtest with a `.iafbt` extension. The result is **21x smaller, 27x fewer files, and 3.6x faster to save**, with a separate index that lets analysis code filter thousands of bundles without opening any of them.
+
+## Why the directory layout had to go
+
+The legacy format wrote one directory per backtest, containing roughly 27 files: `metrics.json`, `summary.json`, `run.json`, several parquet files for OHLCV per symbol, snapshot dumps, the algorithm config, permutation-test results, and so on.
+
+Fine when you're inspecting a single run by hand. A disaster the moment you scale.
+
+| Scenario | Files | Disk |
+|----------|------:|-----:|
+| 100 backtests | 2,700 | 1.59 GB |
+| 1,000 backtests | 27,000 | 15.9 GB |
+| 5,000 backtests | 135,000 | 79 GB |
+| 10,000 backtests | 270,000 | 158 GB |
+
+A 158 GB archive of mostly JSON is not something you commit, push to S3, or back up casually. And every filesystem on every OS punishes you for small-file overhead. APFS, ext4, NTFS, S3-as-a-filesystem, all of them. Listing a directory with a quarter-million entries is slow before you even read anything.
+
+There was also a more subtle problem. Nothing about the format was *versioned*. If I changed a field name in `metrics.json`, every existing on-disk result silently broke or, worse, loaded with stale assumptions.
+
+## The design
+
+The new format is intentionally boring:
+
+```
+[ 4 bytes: "IAFB" magic ][ 4 bytes: uint32 little-endian version ]
+[ zstd-compressed MessagePack document ]
+```
+
+That's it. One file. Extension `.iafbt`. Magic bytes so we can detect it without trusting the filename. A version field so we can evolve the schema without silent breakage. MessagePack for compact, language-portable encoding. zstd level 7 for compression.
+
+Each domain object got a `from_dict()` classmethod alongside its existing `to_dict()`. That covers `Backtest`, `BacktestRun`, `BacktestMetrics`, `BacktestSummaryMetrics`, and `BacktestPermutationTest`. The bundle is just the result of calling `to_dict()` recursively on a `Backtest`, packed and compressed. Loading is the inverse.
+
+`Backtest.save()` and `Backtest.open()` auto-dispatch on the path. Ending in `.iafbt` writes the bundle, anything else writes the legacy directory. The legacy loader still works untouched. You can mix old and new layouts in the same parent directory and `load_backtests_from_directory()` walks both.
+
+## Why MessagePack and zstd
+
+Three things drove the format pick.
+
+**MessagePack vs JSON.** Binary, no whitespace, no key-name repetition for repeated structures, and natively typed. Ints stay ints, floats stay floats, no string-encoded numbers. It's also [readable from every major language](https://msgpack.org/) (Python, Go, Rust, JS, Java) without a custom parser. That matters because backtest artifacts often outlive the code that produced them.
+
+**zstd level 7.** Backtests compress beautifully. Portfolio snapshots repeat the same instrument identifiers thousands of times, equity curves are smooth, schemas are identical across runs. Level 7 is a sweet spot: near-maximum ratio with sub-second compression on the kinds of payloads we're producing. Level 22 buys ~5% more space for ~10x the CPU.
+
+**Pickle is not a serious option.** It ties you to a specific Python version and a specific class layout. And because it executes arbitrary code on load, it's a remote-code-execution vector if anyone ever shares a result file with anyone. For a framework where users routinely exchange backtest results, that's disqualifying.
+
+## What the numbers actually look like
+
+Measured on a real batch of 6 strategies x 11 backtest runs each, on macOS / APFS.
+
+### Per backtest
+
+| | Bundle | Legacy directory | Improvement |
+|---|------:|-----------------:|------------:|
+| size | 793 KB | 16.2 MB | 21x smaller |
+| files | 1 | 27 | 27x fewer |
+
+### End-to-end at N = 200
+
+| | Bundle | Legacy directory | Improvement |
+|---|------:|-----------------:|------------:|
+| total size | 171 MB | 3.52 GB | 21.1x smaller |
+| file count | 201 | 5,400 | 27x fewer |
+| save (4 workers vs serial) | 40.6 s | 146.9 s | 3.6x faster |
+| load (4 workers vs serial) | 113.1 s | 277.0 s | 2.4x faster |
+
+The size win comes from three independent factors stacking. MessagePack saves ~30% over JSON. zstd L7 saves another ~10x on top of that. And removing 27x small-file overhead clears out the per-file metadata bloat. The speed win comes from `ProcessPoolExecutor` fan-out, which is now safe because each backtest is a single atomic write.
+
+## A separate index for filtering without loading
+
+The other half of the design is a small parquet sidecar.
+
+When you save a batch of backtests with `save_backtests_to_directory()`, the framework also writes an `index.parquet` containing one row per bundle: summary metrics (CAGR, Sharpe, Sortino, max DD, win rate), strategy parameters, the date range, and the path to the bundle.
+
+```python
+from investing_algorithm_framework import BacktestIndex
+
+idx = BacktestIndex.open("./batch_1/")
+
+# Filter on summary metrics without opening a single bundle
+survivors = idx.filter("sharpe > 1.5 and max_drawdown > -0.15")
+
+# Now load only the ones you actually want
+backtests = survivors.load_backtests()
+```
+
+For 10,000-strategy parameter sweeps this is the difference between "load everything into memory and filter" (impossible) and "scan a 2 MB parquet and load 50 bundles" (instant).
+
+## Parallel I/O, migration, and resume
+
+A few quality-of-life pieces fell out of the design naturally.
+
+- **Parallel save/load.** `save_backtests_to_directory()` and `load_backtests_from_directory()` both take a `workers=` kwarg and fan out across a `ProcessPoolExecutor`. The 3.6x / 2.4x numbers above are with `workers=4`.
+- **Migration.** `migrate_backtests(src, dst)` converts existing legacy directories to bundles. There's also a CLI: `iaf migrate-backtests --src ... --dst ...`. It streams (doesn't load everything in memory) and supports `skip_existing=True` so you can resume an interrupted migration of a multi-GB archive without redoing work.
+- **Optional source deletion.** `delete_source=True` on the migration removes each legacy directory once its bundle has been written and verified. Useful when you don't have 2x the disk free.
+- **Format kwarg.** `format="bundle"` (default) or `format="directory"` on the save APIs. The legacy layout is still produced if you ask for it.
+
+While I was in there I also fixed an unrelated O(N²) snapshot lookup in the rolling Sharpe calculator. With 10k snapshots it was contributing meaningfully to load time. It's O(N) now.
+
+## Backward compatibility
+
+This was the constraint I cared about most. People have existing backtest archives. They have notebooks that point at specific paths. None of that should break.
+
+- `Backtest.open(path)` auto-detects bundle vs legacy directory by inspecting the path and, if needed, the magic bytes.
+- `load_backtests_from_directory()` walks parent directories that mix both formats and loads them transparently in a single call.
+- Existing `Backtest.save(path)` calls without a `.iafbt` extension keep writing the legacy layout. External code that targets a known directory continues to work.
+- The on-disk version field gives us a clean upgrade path. A future format v2 can be detected, migrated, or refused with a clear error rather than silently misinterpreted.
+
+All 1,633 existing tests still pass, and 9 new tests cover round-trip equality, magic-byte detection, format-version mismatch, save/open dispatch, parallel directory I/O, index filtering, legacy compat, and migration.
+
+## How other backtest libraries handle this
+
+Before designing this I went looking at what was already out there. None of the major Python backtest libraries treat result persistence as a first-class concern.
+
+### Zipline
+
+`run_algorithm()` returns a `pd.DataFrame` of daily "perf packets". One row per session, with columns like `portfolio_value`, `returns`, `positions`, `transactions`, `orders`, and `pyfolio_*` series. Nested fields (positions, orders, transactions) are stored as Python lists of dicts inside DataFrame cells.
+
+There is no built-in save/load for results. Users `df.to_pickle()` or write CSV/parquet manually, and the nested object columns force pickle in practice (parquet can't store arbitrary Python objects).
+
+Zipline does own a "format", its [data bundles](https://www.zipline-reloaded.io/), but those are *input* market data: BCOLZ columnar files for OHLCV plus SQLite for asset metadata and corporate-action adjustments. Not for backtest output.
+
+Risk metrics are computed on the fly by a `MetricsSet` during simulation and aren't persisted as a separate artifact.
+
+### Backtrader
+
+`cerebro.run()` returns a list of `Strategy` instances (or list-of-lists when optimizing). Analyzer results live on each strategy via `strat.analyzers.<name>.get_analysis()`, returning `OrderedDict`s.
+
+Nothing is built in. The community pattern is `pickle.dump(cerebro)` or pickle just the analyzer dicts. Whole-cerebro pickling is fragile because it pulls in data feeds, indicator caches, and plotting state.
+
+There's an `optreturn=True` flag in optimization mode that strips strategies down to just params and analyzers. An implicit acknowledgement that full strategy objects are too heavy to ship between processes. There's also a `WriterFile` that emits a CSV/text dump of the run, but it's a logging artifact, not a structured re-loadable format.
+
+### vectorbt
+
+Easily the most thoughtful of the three. A `Portfolio` object holds columnar NumPy structured arrays (`order_records`, `log_records`) plus a wrapped close series. Trades, positions, and drawdowns are recomputed lazily from the order records via Numba-compiled functions and cached as properties.
+
+It has built-in `pf.save('path')` and `Portfolio.load('path')`, implemented via the `Pickleable` mixin. Effectively `pickle.dump` of the configured state (close, order records, log records, init cash, wrapper). Cached metrics aren't saved; they regenerate fast thanks to Numba.
+
+The strength here is that the on-disk artifact is small because it stores raw event records, not pre-aggregated time series. The weaknesses are the usual pickle weaknesses: Python-only, version-fragile, no compression by default, no schema, no portability, and the security model is "trust whoever sent you the file." vectorbt PRO offers HDF5-backed storage as an upgrade.
+
+### Side-by-side
+
+| Aspect | Zipline | Backtrader | vectorbt | `.iafbt` |
+|---|---|---|---|---|
+| Built-in save/load | ❌ | ❌ | ✅ pickle | ✅ explicit binary |
+| Format | pandas / pickle | pickle | pickle | msgpack + zstd L7 |
+| Magic + version header | n/a | n/a | n/a | ✅ `IAFB` + uint32 |
+| Cross-language readable | partial (parquet if user opts) | ❌ | ❌ | ✅ msgpack |
+| Compression | n/a | n/a | n/a | ✅ zstd |
+| OHLCV side-store | BCOLZ (input only) | n/a | inside pickle | content-addressed parquet |
+| Index for filter-without-load | ❌ | ❌ | ❌ | ✅ `index.parquet` |
+| Parallel I/O API | ❌ | ❌ | ❌ | ✅ `workers=` |
+| Resume-safe migration | n/a | n/a | n/a | ✅ `skip_existing` |
+| Pickle security risk | high | high | high | none (msgpack) |
+
+The headline difference: Zipline and Backtrader essentially leave persistence as an exercise for the user. vectorbt has an API but it's pickle. `.iafbt` is the only format in this group with an explicit, versioned, compressed, language-portable container, plus a separate index for fast filtering across thousands of results.
+
+## Why this matters
+
+When you're running 5,000-strategy parameter sweeps, the persistence layer stops being plumbing and starts being a first-class part of the workflow.
+
+- A 7.6 GB archive of 10,000 backtests fits in S3, Git LFS, or a backup volume. A 158 GB pile of JSON does not.
+- Filtering 10,000 results by Sharpe takes milliseconds against `index.parquet` and zero bundle reads.
+- A versioned, magic-headed binary format means archives from a year ago will still load, or fail loudly, instead of silently misinterpreting fields.
+- MessagePack means a Go service or a Rust analysis tool can read these files directly. No Python required.
+- Migrations are resumable, which matters when you're moving multi-GB archives over a network.
+
+The full implementation is in the [investing-algorithm-framework](https://github.com/coding-kitties/investing-algorithm-framework). The PR is [#516](https://github.com/coding-kitties/investing-algorithm-framework/pull/516).

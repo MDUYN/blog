@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 400.1 580.55">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#_Безымянный_градиент_13-2);
+      }
+
+      .cls-1, .cls-2, .cls-3, .cls-4 {
+        stroke-width: 0px;
+      }
+
+      .cls-2 {
+        fill: url(#_Безымянный_градиент_10-2);
+      }
+
+      .cls-3 {
+        fill: url(#_Безымянный_градиент_13);
+      }
+
+      .cls-4 {
+        fill: url(#_Безымянный_градиент_10);
+      }
+    </style>
+    <linearGradient id="_Безымянный_градиент_10" data-name="Безымянный градиент 10" x1=".01" y1="141.03" x2="400.1" y2="141.03" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0052ff"/>
+      <stop offset="1" stop-color="#009eff"/>
+    </linearGradient>
+    <linearGradient id="_Безымянный_градиент_10-2" data-name="Безымянный градиент 10" x1="0" y1="381.55" x2="324.31" y2="381.55" xlink:href="#_Безымянный_градиент_10"/>
+    <linearGradient id="_Безымянный_градиент_13" data-name="Безымянный градиент 13" x1="26.47" y1="539.1" x2="26.55" y2="539.1" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dba203"/>
+      <stop offset="1" stop-color="#ffc000"/>
+    </linearGradient>
+    <linearGradient id="_Безымянный_градиент_13-2" data-name="Безымянный градиент 13" x1="19.84" y1="505.63" x2="181.19" y2="505.63" xlink:href="#_Безымянный_градиент_13"/>
+  </defs>
+  <g id="_Слой_1" data-name="Слой 1">
+    <g>
+      <path class="cls-4" d="M400.1,0v140.83c0,14.21-9.37,26.73-23.01,30.72L.01,282.05v-140.83c0-14.21,9.37-26.73,23.01-30.72L400.1,0Z"/>
+      <g>
+        <path class="cls-2" d="M23.02,312.24c-13.64,4-23.02,16.51-23.02,30.73v149.56c0,19.42,10.34,36.94,26.47,46.54-14.53-34.13-8.51-61.8,52.04-78.3l102.68-30.08,120.1-35.13c13.65-3.99,23.03-16.51,23.03-30.73v-140.83L23.02,312.24Z"/>
+        <path class="cls-3" d="M26.48,539.1l.07.03s-.05-.03-.08-.05c0,0,0,.01,0,.02Z"/>
+        <path class="cls-1" d="M78.51,460.78c-60.52,16.48-66.56,44.14-52.06,78.25l.1.1h0c8.24,3.59,16.7,6.66,25.33,9.18l107.67,31.54c10.82,3.17,21.65-4.94,21.65-16.21v-132.94l-102.68,30.08Z"/>
+      </g>
+    </g>
+  </g>
+</svg>

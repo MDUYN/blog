@@ -13,6 +13,19 @@ type Article = {
 
 const articles: Article[] = [
   {
+    title: "A Single-Bundle Binary Format for Backtest Persistence",
+    description:
+      "How I replaced a 27-files-per-backtest directory layout with a single zstd + MessagePack bundle (.iafbt) — 21× smaller, 3.6× faster to save, language-portable, and versioned.",
+    href: "/articles/backtest-bundle-format",
+    date: "May 2026",
+    tags: [
+      "open-source",
+      "investing-algorithm-framework",
+      "quantitative-trading",
+      "software-engineering",
+    ],
+  },
+  {
     title: "Pipelines: Cross-Sectional Factor Computation in One Shot",
     description:
       "How I added a Pipeline API to the Investing Algorithm Framework so strategies can rank, mask, and z-score factors across many symbols every iteration, with no per-symbol loops and no look-ahead.",
