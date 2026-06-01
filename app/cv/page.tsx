@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { withBasePath } from "@/app/lib/base-path";
 
 type TimelineEntry = {
   role: string;
@@ -439,7 +440,7 @@ function TimelineItem({ entry, index }: { entry: TimelineEntry; index: number })
           <div className="flex items-start gap-3">
             {entry.logo && (
               <img
-                src={entry.logo}
+                src={withBasePath(entry.logo)}
                 alt={entry.company}
                 className="w-10 h-10 rounded-md object-contain bg-white p-1 shrink-0 mt-0.5"
               />
